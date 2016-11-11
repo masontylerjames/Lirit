@@ -14,7 +14,8 @@ def model():
     '''
     input_shape = (n_steps, np.prod(shape))
     model = Sequential()
-    model.add(LSTM(32, input_shape=input_shape, return_sequences=True))
+    model.add(LSTM(np.prod(shape), input_shape=input_shape,
+                   return_sequences=True))
     model.compile(loss='mse', optimizer='sgd')
     return model
 
