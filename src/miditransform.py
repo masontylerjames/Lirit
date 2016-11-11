@@ -108,10 +108,10 @@ def noteStateMatrixToMidi(statematrix, filename="example"):
         for i in range(span):
             n = state[i]
             p = previousstate[i]
-            if p[0] == 1:
+            if p[0] == 1:  # index 0 is on/off
                 if n[0] == 0:
                     offNotes.append(i)
-                elif n[1] == 1:
+                elif n[1] == 1:  # index 1 id new/old
                     offNotes.append(i)
                     onNotes.append(i)
             elif n[0] == 1:
@@ -125,8 +125,10 @@ def noteStateMatrixToMidi(statematrix, filename="example"):
                 time - lastcmdtime) * tickscale, velocity=40, pitch=note + lowerBound))
             lastcmdtime = time  # event tick is relative to previous event
 
-        previousstate = state
+        previousstate = state  # update previousstate
 
+    # midi files require an end f track event to be run by most
+    # programs
     eot = midi.EndOfTrackEvent(tick=1)
     track.append(eot)
 
