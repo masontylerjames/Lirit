@@ -4,10 +4,9 @@ import numpy as np
 
 
 def statematrixtoarray(statematrix):
-    arr = [[entry for note in state for entry in note]
-           for state in statematrix]
+    arr = [[[entry for note in state for entry in note]
+            for state in statematrix]]
     arr = np.array(arr)
-
     return arr
 
 
@@ -18,7 +17,7 @@ def train(midifile):
 
 def _train(statematrix):
     neuralnet = model()
-    train = statematrixtoarray(statematrix[0:n_steps])
+    train = statematrixtoarray(statematrix[0: n_steps])
     test = statematrixtoarray(statematrix[1: n_steps + 1])
     neuralnet.fit(train, test)
     return neuralnet
