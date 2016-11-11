@@ -3,6 +3,7 @@ import numpy as np
 
 lowerBound = 16  # midi pitch corresponding to just above 20 Hz
 upperBound = 135  # midi pitch corresponding to just below 20 kHz
+shape = (upperBound - lowerBound, 2)
 
 
 def midiToStateMatrix(midifile):

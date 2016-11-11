@@ -1,17 +1,13 @@
-from keras.model import Model
-from keras.Layers import Input, Dense
+from keras.models import Sequential
+from keras.Layers import LSTM
+from miditransform import shape
 
 
-def model(input_shape=None, dropout=0.5):
+def model(dropout=0.5):
     '''
     input_shape: a tuple determining the shape of the input layer
     '''
-    inputs = Input(shape=shape(input_shape))
-    output = Dense(output_shape=shape(input_shape))(inputs)
-    model = Model(input=inputs, output=output)
+    model = Sequential()
+    model.add(LSTM(output_dim=shape, input_shape=shape, activation='sigmoid',
+                   inner_activation='hard_sigmoid'))
     return model
-
-
-def shape(input_shape):
-    shape = (119, 2) if input_shape is None else input_shape
-    return shape
