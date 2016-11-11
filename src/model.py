@@ -8,8 +8,8 @@ def model():
     OUTPUT: a compiled model
     '''
     model = Sequential()
-    model.add(Input(shape=shape))
-    model.add(LSTM(output_shape=shape, activation='sigmoid',
+    # model.add(Input(shape=shape))
+    model.add(LSTM(input_shape=shape, output_shape=shape, activation='sigmoid',
                    inner_activation='hard_sigmoid'))
     model.compile(loss='mse', optimizer='sgd')
     return model
