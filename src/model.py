@@ -3,11 +3,12 @@ from keras.Layers import LSTM
 from miditransform import shape
 
 
-def model(dropout=0.5):
+def model():
     '''
-    input_shape: a tuple determining the shape of the input layer
+    OUTPUT: a compiled model
     '''
     model = Sequential()
     model.add(LSTM(output_shape=shape, input_shape=shape, activation='sigmoid',
                    inner_activation='hard_sigmoid'))
+    model.compile(loss='mse', optimizer='sgd')
     return model
