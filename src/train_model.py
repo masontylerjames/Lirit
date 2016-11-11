@@ -10,8 +10,10 @@ def train(midifile):
 
 def _train(statematrix):
     neuralnet = model()
-    train = [np.flatten(state) for state in statematrix[0:n_steps]]
-    test = [np.flatten(state) for state in statematrix[1:n_steps + 1]]
+    train = [np.ndarray.flatten(state)
+             for state in statematrix[0:n_steps]]
+    test = [np.ndarray.flatten(state)
+            for state in statematrix[1:n_steps + 1]]
     neuralnet.fit(train, test)
     return neuralnet
 
