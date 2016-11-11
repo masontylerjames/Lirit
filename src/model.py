@@ -1,4 +1,4 @@
-from keras.Layers import LSTM, Input
+from keras.layers import LSTM, Input
 from keras.models import Sequential
 from miditransform import shape
 
