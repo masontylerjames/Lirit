@@ -1,17 +1,15 @@
 from miditransform import midiToStateMatrix
-from model import model
+from model import model, n_steps
 
 
-def train_one_step(midifile):
+def train(midifile):
     statematrix = midiToStateMatrix(midifile)
-    model().fit(statematrix[100], statematrix[101])
+    return _train(statematrix)
 
 
-def train(midifile, sample_length=None, samples=None):
-    statematrix = midiToStateMatrix(midifile)
-    return _train(statematrix, sample_length, samples)
-
-
-def _train(statematrix, sample_length, samples):
+def _train(statematrix):
     neuralnet = model()
+    train = statematrix[0:n_steps]
+    test = statematrix[1:n_steps + 1]
+    neuralnet.fit(train, test)
     return neuralnet
