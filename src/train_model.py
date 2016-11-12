@@ -2,7 +2,7 @@ from miditransform import midiToStateMatrix
 from model import model, n_steps
 import numpy as np
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, abspath
 # this all needs to be rewritten
 
 '''
@@ -16,6 +16,10 @@ for each state matrix make a list of inputs and a list of their corresponding ou
 
 stitch these lists together and that's your training corpus
 '''
+
+
+def masstrain():
+    pass
 
 
 def getfilesfromdir(directory):
@@ -32,27 +36,7 @@ def getfilesfromdir(directory):
 
 
 def filesfromsingledirectory(directory):
-    return [f for f in listdir(directory) if isfile(join(directory, f))]
-
-
-def statematrixtoarray(statematrix):
-    arr = [[[entry for note in state for entry in note]
-            for state in statematrix]]
-    arr = np.array(arr)
-    return arr
-
-
-def train(midifile):
-    statematrix = midiToStateMatrix(midifile)
-    return _train(statematrix)
-
-
-def _train(statematrix):
-    neuralnet = model()
-    train = statematrixtoarray(statematrix[0: n_steps])
-    test = statematrixtoarray(statematrix[1: n_steps + 1])
-    neuralnet.fit(train, test)
-    return neuralnet
+    return [abspath(directory) + f for f in listdir(directory) if isfile(join(directory, f))]
 
 if __name__ == '__main__':
-    neuralnet = train('../data/train/mozart/mz_311_1_format0.mid')
+    pass
