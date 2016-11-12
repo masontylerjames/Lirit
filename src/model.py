@@ -18,8 +18,7 @@ def model():
     # effectively flattens all the state matrices
     model.add(Flatten(input_shape=input_shape))
     model.add(Reshape(flat_shape))
-    model.add(LSTM(np.prod(shape), input_shape=input_shape,
-                   return_sequences=True))
+    model.add(LSTM(np.prod(shape), return_sequences=True))
     model.add(Reshape(input_shape))
     model.add(Activation('sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adagrad')
