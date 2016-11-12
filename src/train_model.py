@@ -17,6 +17,16 @@ stitch these lists together and that's your training corpus
 '''
 
 
+def getfilesfromdir(dir):
+    '''
+    INPUT: a directory name or list of directory names
+    OUTPUT: a list of filenames
+    '''
+
+    files = None
+    return files
+
+
 def statematrixtoarray(statematrix):
     arr = [[[entry for note in state for entry in note]
             for state in statematrix]]
