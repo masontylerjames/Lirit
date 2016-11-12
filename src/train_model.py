@@ -1,7 +1,8 @@
 from miditransform import midiToStateMatrix
 from model import model, n_steps
 import numpy as np
-
+from os import listdir
+from os.path import isfile, join
 # this all needs to be rewritten
 
 '''
@@ -17,14 +18,21 @@ stitch these lists together and that's your training corpus
 '''
 
 
-def getfilesfromdir(dir):
+def getfilesfromdir(directory):
     '''
     INPUT: a directory name or list of directory names
     OUTPUT: a list of filenames
     '''
-
-    files = None
+    if isinstance(directory, list):
+        files = [filesfromsingledirectory(item) for item in directory]
+        files = [entry for item in files for entry in item]
+    else:
+        files = filesfromsingledirectory(directory)
     return files
+
+
+def filesfromsingledirectory(directory):
+    return [f for f in listdir(directory) if isfile(join(directory, f))]
 
 
 def statematrixtoarray(statematrix):
