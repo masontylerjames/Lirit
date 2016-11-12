@@ -21,8 +21,8 @@ def model():
     model.add(LSTM(np.prod(shape), input_shape=input_shape,
                    return_sequences=True))
     model.add(Reshape(input_shape))
-    model.add(Activation('hard_sigmoid'))
-    model.compile(loss='mse', optimizer='sgd')
+    model.add(Activation('sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adagrad')
     return model
 
 if __name__ == '__main__':
