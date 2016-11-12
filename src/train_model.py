@@ -2,6 +2,8 @@ from miditransform import midiToStateMatrix
 from model import model, n_steps
 import numpy as np
 
+# this all needs to be rewritten
+
 
 def statematrixtoarray(statematrix):
     arr = [[[entry for note in state for entry in note]
