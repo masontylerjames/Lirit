@@ -34,7 +34,7 @@ def generateXY(statematrix):
     '''
     X, Y = [], []
     i = 0
-    print statematrix.shape, statematrix.shape[0] / offset
+    print len(statematrix), len(statematrix) / offset
     while True:
         print 'step {}'.format(i)
         try:
