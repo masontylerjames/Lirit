@@ -136,3 +136,7 @@ def noteStateMatrixToMidi(statematrix, filename="example"):
     track.append(eot)
 
     midi.write_midifile("{}.mid".format(filename), pattern)
+
+if __name__ == '__main__':
+    sm = midiToStateMatrix(
+        '../data/train/mozart/mz_311_1_format0.mid')

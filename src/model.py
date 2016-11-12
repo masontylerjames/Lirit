@@ -1,4 +1,4 @@
-from keras.layers import LSTM
+from keras.layers import LSTM, Flatten, Reshape, Activation
 from keras.models import Sequential
 from miditransform import shape
 import numpy as np
@@ -12,10 +12,16 @@ def model():
     '''
     OUTPUT: a compiled model
     '''
-    input_shape = (n_steps, np.prod(shape))
+    input_shape = (n_steps, shape[0], shape[1])
+    flat_shape = (n_steps, np.prod(shape))
     model = Sequential()
+    # effectively flattens all the state matrices
+    model.add(Flatten(input_shape=input_shape))
+    model.add(Reshape(flat_shape))
     model.add(LSTM(np.prod(shape), input_shape=input_shape,
                    return_sequences=True))
+    model.add(Reshape(input_shape))
+    model.add(Activation('hard_sigmoid'))
     model.compile(loss='mse', optimizer='sgd')
     return model
 
