@@ -4,6 +4,18 @@ import numpy as np
 
 # this all needs to be rewritten
 
+'''
+To train a model
+
+select a group of midi files to use to train
+
+for each midi file generate a state matrix
+
+for each state matrix make a list of inputs and a list of their corresponding outputs
+
+stitch these lists together and that's your training corpus
+'''
+
 
 def statematrixtoarray(statematrix):
     arr = [[[entry for note in state for entry in note]
