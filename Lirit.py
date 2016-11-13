@@ -1,12 +1,13 @@
 from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
-from miditransform import shape
+from src.miditransform import shape
 from os import listdir
 from os.path import abspath
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.model import input_shape
 from src.train_model import getfiles, offset, generateXY
 import numpy as np
+import cPickle as pickle
 
 
 class Lirit(object):
@@ -55,6 +56,10 @@ class Lirit(object):
                                     0][-offset:], axis=0)
             break
         noteStateMatrixToMidi(statematrix[:length], filename)
+
+    def save(self, filename):
+        with open(filename) as f:
+            pickle.dump(self, f)
 
 
 def model(n_steps=256):
