@@ -1,12 +1,12 @@
 from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
-from src.miditransform import shape
 from os import listdir
 from os.path import abspath
-from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.fit import getfiles, generateXY
-import numpy as np
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.miditransform import shape
 import cPickle as pickle
+import numpy as np
 
 
 class Lirit(object):
@@ -22,7 +22,7 @@ class Lirit(object):
 
     def fitmidi(self, filename, **kwargs):
         statematrix = midiToStateMatrix(filename)
-        X, Y = generateXY(statematrix, self.offset)
+        X, Y = generateXY(statematrix, self.n_steps, self.offset)
         self.model.fit(X, Y, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
@@ -32,7 +32,8 @@ class Lirit(object):
         for f in files[1:]:
             print '{} in pipeline'.format(f.split('/')[-1])
             statematrix = midiToStateMatrix(f)
-            X_f, Y_f = generateXY(statematrix, self.offset)
+            X_f, Y_f = generateXY(
+                statematrix, self.n_steps, self.offset)
             X += X_f
             Y += Y_f
         self.model.fit(X, Y, **kwargs)
@@ -55,7 +56,7 @@ class Lirit(object):
         while len(statematrix) < length:
             predict = cleanstatematrix(self.model.predict(predict))
             statematrix = np.append(statematrix, predict[
-                                    0][-offset:], axis=0)
+                                    0][-self.offset:], axis=0)
             break
         noteStateMatrixToMidi(statematrix[:length], filename)
 

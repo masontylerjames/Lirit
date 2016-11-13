@@ -1,10 +1,9 @@
-from miditransform import midiToStateMatrix, shape
-from model import model, n_steps
+from miditransform import shape
 from os import listdir
 from os.path import isfile, join, abspath
 
 
-def generateXY(statematrix, offset):
+def generateXY(statematrix, n_steps, offset):
     '''
     INPUT: statematrix
     OUTPUT: list of statematrix slices, list of statematrix slices
