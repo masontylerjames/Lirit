@@ -4,7 +4,7 @@ from miditransform import noteStateMatrixToMidi
 import numpy as np
 
 
-def compose(model, length, seed=None):
+def compose(model, length, filename='example', seed=None):
     '''
     INPUT: Keras model, int
     '''
@@ -12,9 +12,13 @@ def compose(model, length, seed=None):
     if seed is None:
         seed = np.random.random(input_shape)
         seed = seed[np.newaxis]
-    predict = model.predict(seed)
-    statematrix = cleanstatematrix(predict)[0]
-    noteStateMatrixToMidi(statematrix)
+    predict = cleanstatematrix(model.predict(seed))
+    statematrix = predict[0]
+    while len(statematrix) < length:
+        predict = cleanstatematrix(model.predict(predict))
+        statematrix += predict[0][-offset:]
+        break
+    noteStateMatrixToMidi(statematrix, filename)
 
 
 def cleanstatematrix(statematrix):
