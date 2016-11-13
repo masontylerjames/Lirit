@@ -6,13 +6,13 @@ import numpy as np
 # each time step is a 32nd note, so 8 of those is a quarter note and
 # there are 4 quarter notes in a measure in 4/4 time
 n_steps = 8 * 4 * 8
+input_shape = (n_steps, shape[0], shape[1])
 
 
 def model():
     '''
     OUTPUT: a compiled model
     '''
-    input_shape = (n_steps, shape[0], shape[1])
     flat_shape = (n_steps, np.prod(shape))
     model = Sequential()
     # effectively flattens all the state matrices
