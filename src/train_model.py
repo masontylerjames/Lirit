@@ -79,7 +79,7 @@ def getfiles(directory):
 
 
 def filesfromsingledirectory(directory):
-    return [abspath(directory) + f for f in listdir(directory) if isfile(join(directory, f))]
+    return [abspath(directory) + '/' + f for f in listdir(directory) if isfile(join(directory, f))]
 
 if __name__ == '__main__':
     neuralnet = model()
