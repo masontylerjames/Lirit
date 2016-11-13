@@ -28,7 +28,8 @@ class Lirit(object):
     def fitcollection(self, dirs, **kwargs):
         files = getfiles(dirs)
         print '{} in pipeline'.format(files[0].split('/')[-1])
-        X, Y = generateXY(midiToStateMatrix(files[0]))
+        X, Y = generateXY(midiToStateMatrix(
+            files[0]), self.n_steps, self.offset)
         for f in files[1:]:
             print '{} in pipeline'.format(f.split('/')[-1])
             statematrix = midiToStateMatrix(f)
