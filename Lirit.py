@@ -2,9 +2,9 @@ from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
 from os import listdir
 from os.path import abspath
-from Lirit.fit import getfiles, generateXY
-from Lirit.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from Lirit.miditransform import shape
+from src.fit import getfiles, generateXY
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.miditransform import shape
 import cPickle as pickle
 import numpy as np
 
