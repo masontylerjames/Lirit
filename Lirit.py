@@ -4,16 +4,17 @@ from src.miditransform import shape
 from os import listdir
 from os.path import abspath
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.train_model import getfiles, offset, generateXY
+from src.fit import getfiles, generateXY
 import numpy as np
 import cPickle as pickle
 
 
 class Lirit(object):
 
-    def __init__(self, n_steps=256):
+    def __init__(self, n_steps=256, offset=128):
         self.n_steps = n_steps
         self.input_shape = (n_steps, shape[0], shape[1])
+        self.offset = offset
         self.model = model(self.n_steps, self.input_shape)
 
     def fit(self, *args, **kwargs):
@@ -21,7 +22,7 @@ class Lirit(object):
 
     def fitmidi(self, filename, **kwargs):
         statematrix = midiToStateMatrix(filename)
-        X, Y = generateXY(statematrix)
+        X, Y = generateXY(statematrix, self.offset)
         self.model.fit(X, Y, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
@@ -31,7 +32,7 @@ class Lirit(object):
         for f in files[1:]:
             print '{} in pipeline'.format(f.split('/')[-1])
             statematrix = midiToStateMatrix(f)
-            X_f, Y_f = generateXY(statematrix)
+            X_f, Y_f = generateXY(statematrix, self.offset)
             X += X_f
             Y += Y_f
         self.model.fit(X, Y, **kwargs)
