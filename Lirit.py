@@ -92,5 +92,7 @@ if __name__ == '__main__':
     collection = [abspath('data/train') + '/' +
                   d for d in listdir('data/train')]
     lirit.fitcollection(collection)
-    l = 128 * 10
-    lirit.compose(l)
+    l = 128 * 40
+    for i in range(10):
+        filename = 'test{}'.format(i)
+        lirit.compose(l, filename)
