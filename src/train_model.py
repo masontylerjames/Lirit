@@ -17,6 +17,23 @@ stitch these lists together and that's your training corpus
 '''
 
 
+def multitrain(directory, neuralnet):
+    files = getfiles(directory)
+    X, Y = None, None
+    for f in files:
+        statematrix = midiToStateMatrix(f)
+        X_f, Y_f = generateXY(statematrix)
+        if X is None:
+            X = X_f
+        else:
+            X += X_f
+        if Y is None:
+            Y = Y_f
+        else:
+            Y += Y_f
+    neuralnet.fit(X, Y)
+
+
 def singletrain(filename, neuralnet):
     '''
     INPUT: string, keras model
@@ -24,7 +41,6 @@ def singletrain(filename, neuralnet):
     statematrix = midiToStateMatrix(filename)
     X, Y = generateXY(statematrix)
     neuralnet.fit(X, Y)
-    pass
 
 
 def generateXY(statematrix):
