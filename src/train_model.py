@@ -41,9 +41,9 @@ def generateXY(statematrix):
         X_slice = statematrix[Xi[0]:Xi[1]]
         Y_slice = statematrix[Yi[0]:Yi[1]]
         if len(X_slice) < n_steps:
-            X_slice += single * (n_steps - len(X_slice))
+            X_slice += [single for n in range(n_steps - len(X_slice))]
         if len(Y_slice) < n_steps:
-            Y_slice += single * (n_steps - len(Y_slice))
+            Y_slice += [single for n in range(n_steps - len(Y_slice))]
         X.append(X_slice)
         Y.append(Y_slice)
     return X, Y
