@@ -51,6 +51,7 @@ class Lirit(object):
         if seed is None:
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
+            seed = seed > .9
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = predict[0]
         while len(statematrix) < length:
