@@ -13,7 +13,7 @@ def compose(model, length, seed=None):
         seed = np.random.random(input_shape)
         seed = seed[np.newaxis]
     predict = model.predict(seed)
-    statematrix = cleanstatematrix(predict)
+    statematrix = cleanstatematrix(predict)[0]
     noteStateMatrixToMidi(statematrix)
 
 
