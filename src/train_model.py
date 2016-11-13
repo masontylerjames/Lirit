@@ -85,3 +85,5 @@ if __name__ == '__main__':
     neuralnet = model()
     singletrain(
         '../data/train/mozart/mz_311_1_format0.mid', neuralnet)
+    multinet = model()
+    multitrain('../data/train/mozart/', multinet)
