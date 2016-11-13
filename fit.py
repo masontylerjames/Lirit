@@ -3,6 +3,12 @@ from os import listdir
 from os.path import isfile, join, abspath
 
 
+def cleanstatematrix(statematrix):
+    sample = np.random.random(statematrix.shape)
+    sm = sample < statematrix
+    return sm
+
+
 def generateXY(statematrix, n_steps, offset):
     '''
     INPUT: statematrix

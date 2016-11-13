@@ -2,7 +2,7 @@ from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
 from os import listdir
 from os.path import abspath
-from fit import getfiles, generateXY
+from fit import getfiles, generateXY, cleanstatematrix
 from miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import cPickle as pickle
 import numpy as np
@@ -84,11 +84,6 @@ def model(n_steps, input_shape):
     model.compile(loss='binary_crossentropy', optimizer='adagrad')
     return model
 
-
-def cleanstatematrix(statematrix):
-    sample = np.random.random(statematrix.shape)
-    sm = sample < statematrix
-    return sm
 
 if __name__ == '__main__':
     lirit = Lirit()
