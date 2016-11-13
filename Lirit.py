@@ -4,5 +4,5 @@ from src.model import model
 
 if __name__ == '__main__':
     neuralnet = model()
-    multitrain('../data/train/mozart/', neuralnet)
+    multitrain('data/train/mozart/', neuralnet)
     compose(model, 0)
