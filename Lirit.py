@@ -2,9 +2,9 @@ from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
 from os import listdir
 from os.path import abspath
-from src.fit import getfiles, generateXY
-from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.miditransform import shape
+from fit import getfiles, generateXY
+from miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from miditransform import shape
 import cPickle as pickle
 import numpy as np
 
@@ -59,7 +59,6 @@ class Lirit(object):
             predict = cleanstatematrix(self.model.predict(predict))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-            break
         noteStateMatrixToMidi(statematrix[:length], filename)
 
     def save(self, filename):
@@ -97,3 +96,4 @@ if __name__ == '__main__':
     for i in range(10):
         filename = 'test{}'.format(i)
         lirit.compose(l, filename)
+    lirit.save('lirit.pkl')
