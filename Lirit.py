@@ -1,7 +1,7 @@
-from src.train_model import multitrain, offset
-from src.model import model, input_shape
-import numpy as np
 from miditransform import noteStateMatrixToMidi
+from src.model import model, input_shape
+from src.train_model import multitrain, offset
+import numpy as np
 
 
 class Lirit(object):
