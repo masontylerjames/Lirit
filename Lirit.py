@@ -48,6 +48,8 @@ class Lirit(object):
         statematrix = predict[0]
         while len(statematrix) < length:
             predict = cleanstatematrix(self.model.predict(predict))
+            import pdb
+            pdb.set_trace()
             statematrix += predict[0][-offset:]
             break
         noteStateMatrixToMidi(statematrix[:length], filename)
