@@ -4,7 +4,6 @@ from src.miditransform import shape
 from os import listdir
 from os.path import abspath
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.model import input_shape
 from src.train_model import getfiles, offset, generateXY
 import numpy as np
 import cPickle as pickle
@@ -12,8 +11,10 @@ import cPickle as pickle
 
 class Lirit(object):
 
-    def __init__(self):
-        self.model = model()
+    def __init__(self, n_steps=256):
+        self.n_steps = n_steps
+        self.input_shape = (n_steps, shape[0], shape[1])
+        self.model = model(self.n_steps, self.input_shape)
 
     def fit(self, *args, **kwargs):
         self.model.fit(*args, **kwargs)
@@ -46,7 +47,7 @@ class Lirit(object):
         '''
         statematrix = None
         if seed is None:
-            seed = np.random.random(input_shape)
+            seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = predict[0]
@@ -58,11 +59,11 @@ class Lirit(object):
         noteStateMatrixToMidi(statematrix[:length], filename)
 
     def save(self, filename):
-        with open(filename) as f:
+        with open(abspath(filename), 'w') as f:
             pickle.dump(self, f)
 
 
-def model(n_steps=256):
+def model(n_steps, input_shape):
     '''
     OUTPUT: a compiled model
     '''
