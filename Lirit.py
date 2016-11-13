@@ -1,3 +1,5 @@
+from os import listdir
+from os.path import abspath
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.model import model, input_shape
 from src.train_model import getfiles, offset, generateXY
@@ -55,4 +57,9 @@ def cleanstatematrix(statematrix):
     return sm
 
 if __name__ == '__main__':
-    pass
+    lirit = Lirit()
+    collection = [abspath('data/train') + '/' +
+                  d for d in listdir('data/train')]
+    lirit.fitcollection(collection)
+    l = 128 * 10
+    lirit.compose(l)
