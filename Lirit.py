@@ -17,8 +17,8 @@ class Lirit(object):
         self.offset = offset
         self.model = model(self.n_steps, self.input_shape)
 
-    def fit(self, *args, **kwargs):
-        self.model.fit(*args, **kwargs)
+    def fit(self, X, Y, **kwargs):
+        self.model.fit(X, Y, **kwargs)
 
     def fitmidi(self, filename, **kwargs):
         statematrix = midiToStateMatrix(filename)
