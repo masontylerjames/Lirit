@@ -1,4 +1,4 @@
-from miditransform import midiToStateMatrix
+from miditransform import midiToStateMatrix, shape
 from model import model, n_steps
 from os import listdir
 from os.path import isfile, join, abspath
@@ -34,17 +34,18 @@ def generateXY(statematrix):
     '''
     X, Y = [], []
     i = 0
-    print len(statematrix), len(statematrix) / offset
-    while True:
-        print 'step {}'.format(i)
-        try:
-            Yi = (offset + n_steps * i, offset + n_steps * (i + 1))
-            Xi = (n_steps * i, n_steps * (i + 1))
-            Y.append(statematrix[Yi[0]:Yi[1]])
-            X.append(statematrix[Xi[0]:Xi[1]])
-        except IndexError:
-            break
-        i += 1
+    single = [[0 for k in range(shape[1])] for j in range(shape[0])]
+    for i in range(len(statematrix) / offset):
+        Xi = (offset * i, n_steps + offset * i)
+        Yi = (offset * (i + 1), offset * (i + 1) + n_steps)
+        X_slice = statematrix[Xi[0]:Xi[1]]
+        Y_slice = statematrix[Yi[0]:Yi[1]]
+        if len(X_slice) < n_steps:
+            X_slice += single * (n_steps - len(X_slice))
+        if len(Y_slice) < n_steps:
+            Y_slice += single * (n_steps - len(Y_slice))
+        X.append(X_slice)
+        Y.append(Y_slice)
     return X, Y
 
 
