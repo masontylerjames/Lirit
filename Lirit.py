@@ -1,7 +1,10 @@
+from keras.layers import LSTM, Activation, Reshape
+from keras.models import Sequential
+from miditransform import shape
 from os import listdir
 from os.path import abspath
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.model import model, input_shape
+from src.model import input_shape
 from src.train_model import getfiles, offset, generateXY
 import numpy as np
 
@@ -52,6 +55,22 @@ class Lirit(object):
                                     0][-offset:], axis=0)
             break
         noteStateMatrixToMidi(statematrix[:length], filename)
+
+
+def model(n_steps=256):
+    '''
+    OUTPUT: a compiled model
+    '''
+    flat_shape = (n_steps, np.prod(shape))
+    model = Sequential()
+    # flattens the state matrix for LSTM
+    model.add(Reshape(flat_shape, input_shape=input_shape))
+    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(np.prod(shape), return_sequences=True))
+    model.add(Reshape(input_shape))
+    model.add(Activation('sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adagrad')
+    return model
 
 
 def cleanstatematrix(statematrix):
