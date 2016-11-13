@@ -1,11 +1,9 @@
 import midi
 import numpy as np
+from Lirit import upperBound, lowerBound
 
 # lowerBound = 16  # midi pitch corresponding to just above 20 Hz
 # upperBound = 135  # midi pitch corresponding to just below 20 kHz
-lowerBound = 21  # C3
-upperBound = 108  # C5
-shape = (upperBound - lowerBound, 2)
 
 
 def midiToStateMatrix(midifile):

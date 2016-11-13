@@ -1,4 +1,4 @@
-from miditransform import shape
+from Lirit import shape
 from os import listdir
 from os.path import isfile, join, abspath
 

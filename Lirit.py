@@ -4,9 +4,12 @@ from os import listdir
 from os.path import abspath
 from fit import getfiles, generateXY
 from miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from miditransform import shape
 import cPickle as pickle
 import numpy as np
+
+lowerBound = 21
+upperBound = 108
+shape = (upperBound - lowerBound, 2)
 
 
 class Lirit(object):
