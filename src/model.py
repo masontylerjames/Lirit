@@ -1,4 +1,4 @@
-from keras.layers import LSTM, Flatten, Reshape, Activation
+from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
 from miditransform import shape
 import numpy as np
@@ -15,9 +15,9 @@ def model():
     '''
     flat_shape = (n_steps, np.prod(shape))
     model = Sequential()
-    # effectively flattens all the state matrices
-    model.add(Flatten(input_shape=input_shape))
-    model.add(Reshape(flat_shape))
+    # flattens the state matrix for LSTM
+    model.add(Reshape(flat_shape, input_shape=input_shape))
+    model.add(LSTM(128, return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
     model.add(Reshape(input_shape))
     model.add(Activation('sigmoid'))
