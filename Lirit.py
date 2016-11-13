@@ -1,6 +1,6 @@
-from miditransform import noteStateMatrixToMidi
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.model import model, input_shape
-from src.train_model import multitrain, offset
+from src.train_model import getfiles, offset, generateXY
 import numpy as np
 
 
@@ -8,6 +8,24 @@ class Lirit(object):
 
     def __init__(self):
         self.model = model()
+
+    def fit(self, *args, **kwargs):
+        self.model.fit(*args, **kwargs)
+
+    def fitmidi(self, filename, **kwargs):
+        statematrix = midiToStateMatrix(filename)
+        X, Y = generateXY(statematrix)
+        self.model.fit(X, Y, **kwargs)
+
+    def fitcollection(self, dirs, **kwargs):
+        files = getfiles(dirs)
+        X, Y = generateXY(midiToStateMatrix(files[0]))
+        for f in files[1:]:
+            statematrix = midiToStateMatrix(f)
+            X_f, Y_f = generateXY(statematrix)
+            X += X_f
+            Y += Y_f
+        self.model.fit(X, Y, **kwargs)
 
     def compose(self, length, filename='example', seed=None):
         '''
