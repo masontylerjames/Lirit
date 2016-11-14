@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # collection = [abspath('data/train') + '/' +
     #               d for d in listdir('data/train')]
     # lirit.fitcollection(collection)
-    lirit.fitmidis(midis)
+    lirit.fitmidis(midis, nb_epoch=50)
     # lirit.save('lirit.pkl')
     l = 1411
     for i in range(1):
