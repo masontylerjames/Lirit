@@ -117,3 +117,5 @@ if __name__ == '__main__':
         seed = np.array([midiToStateMatrix(
             abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
         lirit.compose(l, filename, seed=seed)
+        sm = midiToStateMatrix(filename, 21, 108)
+        print np.array(sm).shape
