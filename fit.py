@@ -4,8 +4,9 @@ import numpy as np
 
 
 def cleanstatematrix(statematrix, shape):
-    sample = np.random.random(statematrix.shape)
-    sm = sample < statematrix
+    # sample = np.random.random(statematrix.shape)
+    # sm = sample < statematrix
+    sm = statematrix > .9
     return sm
 
 
