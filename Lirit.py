@@ -110,7 +110,7 @@ if __name__ == '__main__':
     #               d for d in listdir('data/train')]
     # lirit.fitcollection(collection)
     lirit.fitmidis(midis)
-    lirit.save('lirit.pkl')
+    # lirit.save('lirit.pkl')
     l = 128 * 55
     for i in range(1):
         filename = 'test{}'.format(i)
