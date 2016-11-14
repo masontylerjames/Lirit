@@ -95,9 +95,10 @@ def model(n_steps, shape):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(512, activation='relu', return_sequences=True))
-    model.add(LSTM(256, activation='relu', return_sequences=True))
+    model.add(LSTM(512, activation='softplus', return_sequences=True))
+    model.add(LSTM(256, activation='softplus', return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
+    model.add(Activation('sigmoid'))
     model.add(Reshape(input_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
@@ -110,13 +111,16 @@ if __name__ == '__main__':
     # lirit.fitcollection(collection)
     lirit.fitmidis(midis, nb_epoch=20)
     # lirit.save('lirit.pkl')
-    import pdb
-    pdb.set_trace()
-    l = 1411
-    for i in range(1):
-        filename = 'test{}'.format(i)
-        seed = np.array([midiToStateMatrix(
-            abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
-        lirit.compose(l, filename, seed=seed)
-        sm = midiToStateMatrix(filename + '.mid', 21, 108)
-        print np.array(sm).shape
+
+    seed = np.array([midiToStateMatrix(
+        abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
+    proba = lirit.model.predict(seed)
+
+    # l = 1411
+    # for i in range(1):
+    #     filename = 'test{}'.format(i)
+    #     seed = np.array([midiToStateMatrix(
+    #         abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
+    #     lirit.compose(l, filename, seed=seed)
+    #     sm = midiToStateMatrix(filename + '.mid', 21, 108)
+    #     print np.array(sm).shape
