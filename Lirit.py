@@ -111,9 +111,9 @@ if __name__ == '__main__':
     # lirit.fitcollection(collection)
     lirit.fitmidis(midis)
     # lirit.save('lirit.pkl')
-    l = 128 * 55
+    l = 1411
     for i in range(1):
         filename = 'test{}'.format(i)
-        seed = [midiToStateMatrix(
-            abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]]
+        seed = np.array([midiToStateMatrix(
+            abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
         lirit.compose(l, filename, seed=seed)
