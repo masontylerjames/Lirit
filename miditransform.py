@@ -101,8 +101,6 @@ def noteStateMatrixToMidi(statematrix, lowerBound, upperBound, filename="example
 
     lastcmdtime = 0
     previousstate = [[0, 0] for x in range(span)]
-    import pdb
-    pdb.set_trace()
     # loop through every state in the statematrix
     for time, state in enumerate(statematrix + [previousstate[:]]):
         offNotes, onNotes = [], []
