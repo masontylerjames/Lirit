@@ -21,13 +21,13 @@ class Lirit(object):
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
 
-    def fitmidis(self, filename, **kwargs):
+    def fitmidis(self, filenames, **kwargs):
         X, Y = [], []
-        if isinstance(filename, list):
+        if isinstance(filenames, list):
             statematrix = midiToStateMatrix(
-                filename, self.lowerBound, self.upperBound)
+                filenames[0], self.lowerBound, self.upperBound)
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
-            for f in filename[1:]:
+            for f in filenames[1:]:
                 statematrix = midiToStateMatrix(
                     filename, self.lowerBound, self.upperBound)
                 X_f, Y_f = generateXY(
