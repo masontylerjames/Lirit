@@ -87,6 +87,23 @@ def model(n_steps, shape):
     return model
 
 
+def newmodel(n_steps, shape):
+    '''
+    OUTPUT: a compiled model
+    '''
+    input_shape = (n_steps, shape[0], shape[1])
+    flat_shape = (n_steps, np.prod(shape))
+    model = Sequential()
+    # flattens the state matrix for LSTM
+    model.add(Reshape(flat_shape, input_shape=input_shape))
+    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(np.prod(shape), return_sequences=True))
+    model.add(Reshape(input_shape))
+    model.add(Activation('sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adagrad')
+    return model
+
+
 if __name__ == '__main__':
     lirit = Lirit()
     collection = [abspath('data/train') + '/' +
