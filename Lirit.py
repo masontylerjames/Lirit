@@ -70,10 +70,12 @@ class Lirit(object):
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = seed > .9
-        predict = cleanstatematrix(self.model.predict(seed))
+        predict = cleanstatematrix(
+            self.model.predict(seed), self.shape)
         statematrix = predict[0]
         while len(statematrix) < length:
-            predict = cleanstatematrix(self.model.predict(predict))
+            predict = cleanstatematrix(
+                self.model.predict(predict), self.shape)
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
         noteStateMatrixToMidi(
