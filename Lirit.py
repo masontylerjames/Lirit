@@ -21,10 +21,23 @@ class Lirit(object):
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
 
-    def fitmidi(self, filename, **kwargs):
-        statematrix = midiToStateMatrix(
-            filename, self.lowerBound, self.upperBound)
-        X, Y = generateXY(statematrix, self.n_steps, self.offset)
+    def fitmidis(self, filename, **kwargs):
+        X, Y = [], []
+        if isinstance(filename, list):
+            statematrix = midiToStateMatrix(
+                filename, self.lowerBound, self.upperBound)
+            X, Y = generateXY(statematrix, self.n_steps, self.offset)
+            for f in filename[1:]:
+                statematrix = midiToStateMatrix(
+                    filename, self.lowerBound, self.upperBound)
+                X_f, Y_f = generateXY(
+                    statematrix, self.n_steps, self.offset)
+                X += X_f
+                Y += Y_f
+        else:
+            statematrix = midiToStateMatrix(
+                filename, self.lowerBound, self.upperBound)
+            X, Y = generateXY(statematrix, self.n_steps, self.offset)
         self.model.fit(X, Y, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
@@ -87,23 +100,6 @@ def model(n_steps, shape):
     return model
 
 
-def newmodel(n_steps, shape):
-    '''
-    OUTPUT: a compiled model
-    '''
-    input_shape = (n_steps, shape[0], shape[1])
-    flat_shape = (n_steps, np.prod(shape))
-    model = Sequential()
-    # flattens the state matrix for LSTM
-    model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(256, return_sequences=True))
-    model.add(LSTM(np.prod(shape), return_sequences=True))
-    model.add(Reshape(input_shape))
-    model.add(Activation('sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='adagrad')
-    return model
-
-
 if __name__ == '__main__':
     lirit = Lirit()
     collection = [abspath('data/train') + '/' +
@@ -113,4 +109,4 @@ if __name__ == '__main__':
     for i in range(1):
         filename = 'test{}'.format(i)
         lirit.compose(l, filename)
-    # lirit.save('lirit.pkl')
+    lirit.save('lirit.pkl')
