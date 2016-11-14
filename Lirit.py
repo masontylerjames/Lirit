@@ -102,31 +102,16 @@ def model(n_steps, shape):
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
-
-def newmodel(n_steps, shape):
-    '''
-    OUTPUT: a compiled model
-    '''
-    input_shape = (n_steps, shape[0], shape[1])
-    flat_shape = (n_steps, np.prod(shape))
-    model = Sequential()
-    # flattens the state matrix for LSTM
-    model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(512, activation='relu', return_sequences=True))
-    model.add(LSTM(256, activation='relu', return_sequences=True))
-    model.add(LSTM(np.prod(shape), return_sequences=True))
-    model.add(Reshape(input_shape))
-    model.compile(loss='binary_crossentropy', optimizer='sgd')
-    return model
-
 if __name__ == '__main__':
     lirit = Lirit()
     midis = [abspath('data/train/mozart/mz_311_1_format0.mid')] * 20
     # collection = [abspath('data/train') + '/' +
     #               d for d in listdir('data/train')]
     # lirit.fitcollection(collection)
-    lirit.fitmidis(midis, nb_epoch=50)
+    lirit.fitmidis(midis, nb_epoch=20)
     # lirit.save('lirit.pkl')
+    import pdb
+    pdb.set_trace()
     l = 1411
     for i in range(1):
         filename = 'test{}'.format(i)
