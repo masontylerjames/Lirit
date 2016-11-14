@@ -26,12 +26,13 @@ class Lirit(object):
         if isinstance(filenames, list):
             statematrix = midiToStateMatrix(
                 filenames[0], self.lowerBound, self.upperBound)
-            X, Y = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(
+                statematrix, self.n_steps, self.offset, self.shape)
             for f in filenames[1:]:
                 statematrix = midiToStateMatrix(
                     filename, self.lowerBound, self.upperBound)
                 X_f, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset)
+                    statematrix, self.n_steps, self.offset, self.shape)
                 X += X_f
                 Y += Y_f
         else:
