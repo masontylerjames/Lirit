@@ -6,8 +6,8 @@ import numpy as np
 def cleanstatematrix(statematrix, shape):
     # sample = np.random.random(statematrix.shape)
     # sm = sample < statematrix
-    sm = statematrix > .9
-    return sm
+    sm = statematrix > .5
+    return sm * 1
 
 
 def generateXY(statematrix, n_steps, offset, shape):
