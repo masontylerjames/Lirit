@@ -79,7 +79,7 @@ def model(n_steps, shape):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(256, return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
     model.add(Reshape(input_shape))
     model.add(Activation('sigmoid'))
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                   d for d in listdir('data/train')]
     lirit.fitcollection(collection)
     l = 128 * 40
-    for i in range(10):
+    for i in range(1):
         filename = 'test{}'.format(i)
         lirit.compose(l, filename)
     lirit.save('lirit.pkl')
