@@ -4,8 +4,6 @@ import numpy as np
 
 
 def cleanstatematrix(statematrix, shape):
-    # sample = np.random.random(statematrix.shape)
-    # sm = sample < statematrix
     sm = statematrix > .5
     return sm * 1
 
