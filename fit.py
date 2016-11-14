@@ -1,6 +1,6 @@
-from Lirit import shape
 from os import listdir
 from os.path import isfile, join, abspath
+import numpy as np
 
 
 def cleanstatematrix(statematrix, shape):
