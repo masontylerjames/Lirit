@@ -95,10 +95,10 @@ def model(n_steps, shape):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(512, activation='relu', return_sequences=True))
+    model.add(LSTM(256, activation='relu', return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
     model.add(Reshape(input_shape))
-    model.add(Activation('sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adagrad')
     return model
 
