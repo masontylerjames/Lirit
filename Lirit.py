@@ -102,20 +102,21 @@ def model(n_steps, shape):
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
-
 if __name__ == '__main__':
     lirit = Lirit()
     midis = [abspath('data/train/mozart/mz_311_1_format0.mid')] * 20
     # collection = [abspath('data/train') + '/' +
     #               d for d in listdir('data/train')]
     # lirit.fitcollection(collection)
-    lirit.fitmidis(midis, nb_epoch=50)
+    lirit.fitmidis(midis, nb_epoch=20)
     # lirit.save('lirit.pkl')
+    import pdb
+    pdb.set_trace()
     l = 1411
     for i in range(1):
         filename = 'test{}'.format(i)
         seed = np.array([midiToStateMatrix(
             abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
         lirit.compose(l, filename, seed=seed)
-        sm = midiToStateMatrix(filename, 21, 108)
+        sm = midiToStateMatrix(filename + '.mid', 21, 108)
         print np.array(sm).shape
