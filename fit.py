@@ -3,13 +3,13 @@ from os import listdir
 from os.path import isfile, join, abspath
 
 
-def cleanstatematrix(statematrix):
+def cleanstatematrix(statematrix, shape):
     sample = np.random.random(statematrix.shape)
     sm = sample < statematrix
     return sm
 
 
-def generateXY(statematrix, n_steps, offset):
+def generateXY(statematrix, n_steps, offset, shape):
     '''
     INPUT: statematrix
     OUTPUT: list of statematrix slices, list of statematrix slices

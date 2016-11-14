@@ -1,12 +1,11 @@
 import midi
 import numpy as np
-from Lirit import upperBound, lowerBound
 
 # lowerBound = 16  # midi pitch corresponding to just above 20 Hz
 # upperBound = 135  # midi pitch corresponding to just below 20 kHz
 
 
-def midiToStateMatrix(midifile):
+def midiToStateMatrix(midifile, lowerBound, upperBound):
     '''
     INPUT: str
     OUTPUT: numpy array
@@ -91,7 +90,7 @@ def midiToStateMatrix(midifile):
     return statematrix
 
 
-def noteStateMatrixToMidi(statematrix, filename="example"):
+def noteStateMatrixToMidi(statematrix, lowerBound, upperBound, filename="example"):
     statematrix = np.asarray(statematrix)
     pattern = midi.Pattern()
     track = midi.Track()

@@ -7,24 +7,23 @@ from miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import cPickle as pickle
 import numpy as np
 
-lowerBound = 21
-upperBound = 108
-shape = (upperBound - lowerBound, 2)
-
 
 class Lirit(object):
 
     def __init__(self, n_steps=256, offset=128):
         self.n_steps = n_steps
-        self.input_shape = (n_steps, shape[0], shape[1])
+        self.lowerBound = 21
+        self.upperBound = 108
+        self.shape = (self.upperBound - self.lowerBound, 2)
         self.offset = offset
-        self.model = model(self.n_steps, self.input_shape)
+        self.model = model(self.n_steps, self.shape)
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
 
     def fitmidi(self, filename, **kwargs):
-        statematrix = midiToStateMatrix(filename)
+        statematrix = midiToStateMatrix(
+            filename, self.lowerBound, self.upperBound)
         X, Y = generateXY(statematrix, self.n_steps, self.offset)
         self.model.fit(X, Y, **kwargs)
 
@@ -32,10 +31,11 @@ class Lirit(object):
         files = getfiles(dirs)
         print '{} in pipeline'.format(files[0].split('/')[-1])
         X, Y = generateXY(midiToStateMatrix(
-            files[0]), self.n_steps, self.offset)
+            files[0], self.lowerBound, self.upperBound), self.n_steps, self.offset)
         for f in files[1:]:
             print '{} in pipeline'.format(f.split('/')[-1])
-            statematrix = midiToStateMatrix(f)
+            statematrix = midiToStateMatrix(
+                f, self.lowerBound, self.upperBound)
             X_f, Y_f = generateXY(
                 statematrix, self.n_steps, self.offset)
             X += X_f
@@ -62,17 +62,19 @@ class Lirit(object):
             predict = cleanstatematrix(self.model.predict(predict))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-        noteStateMatrixToMidi(statematrix[:length], filename)
+        noteStateMatrixToMidi(
+            statematrix[:length], self.lowerBound, self.upperBound, filename)
 
     def save(self, filename):
         with open(abspath(filename), 'w') as f:
             pickle.dump(self, f)
 
 
-def model(n_steps, input_shape):
+def model(n_steps, shape):
     '''
     OUTPUT: a compiled model
     '''
+    input_shape = (n_steps, shape[0], shape[1])
     flat_shape = (n_steps, np.prod(shape))
     model = Sequential()
     # flattens the state matrix for LSTM
