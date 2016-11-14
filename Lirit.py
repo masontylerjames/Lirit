@@ -96,4 +96,4 @@ if __name__ == '__main__':
     for i in range(1):
         filename = 'test{}'.format(i)
         lirit.compose(l, filename)
-    lirit.save('lirit.pkl')
+    # lirit.save('lirit.pkl')
