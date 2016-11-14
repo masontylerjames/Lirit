@@ -102,10 +102,12 @@ def model(n_steps, shape):
 
 if __name__ == '__main__':
     lirit = Lirit()
-    collection = [abspath('data/train') + '/' +
-                  d for d in listdir('data/train')]
-    lirit.fitcollection(collection)
-    l = 128 * 40
+    midis = [abspath('data/train/mozart/mz_311_1_format0.mid')] * 20
+    # collection = [abspath('data/train') + '/' +
+    #               d for d in listdir('data/train')]
+    # lirit.fitcollection(collection)
+    lirit.fitmidis(midis)
+    l = 128 * 55
     for i in range(1):
         filename = 'test{}'.format(i)
         lirit.compose(l, filename)
