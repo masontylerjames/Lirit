@@ -110,5 +110,6 @@ if __name__ == '__main__':
     l = 128 * 55
     for i in range(1):
         filename = 'test{}'.format(i)
-        lirit.compose(l, filename)
+        lirit.compose(l, filename, seed=midiToStateMatrix(
+            abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256])
     lirit.save('lirit.pkl')
