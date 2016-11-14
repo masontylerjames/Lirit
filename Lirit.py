@@ -99,7 +99,7 @@ def model(n_steps, shape):
     model.add(LSTM(256, activation='relu', return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
     model.add(Reshape(input_shape))
-    model.compile(loss='binary_crossentropy', optimizer='adagrad')
+    model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
 
