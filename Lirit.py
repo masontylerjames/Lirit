@@ -3,17 +3,20 @@ from keras.models import Sequential
 from os.path import abspath
 from src.fit import getfiles, generateXY, cleanstatematrix
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.miditransform import state_shape as shape
+from src.miditransform import state_shape
 import cPickle as pickle
 import numpy as np
+
+shape = state_shape
 
 
 class Lirit(object):
 
-    def __init__(self, n_steps=256, offset=128):
+    def __init__(self, n_steps=256):
         self.n_steps = n_steps
-        self.offset = offset
+        self.offset = 1
         self.model = model(self.n_steps)
+        self.input_shape = (n_steps, shape[0], shape[1])
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
@@ -61,14 +64,15 @@ class Lirit(object):
         if seed is None:
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
-            seed = seed > .9
+            seed = (seed > .85) * 1
         predict = cleanstatematrix(self.model.predict(seed))
-        statematrix = predict[0]
-        while len(statematrix) < length:
-            predict = cleanstatematrix(self.model.predict(predict))
+        statematrix = np.append(seed[0], predict[0])
+        while len(statematrix) < length + self.n_steps:
+            predict = cleanstatematrix(
+                self.model.predict(statematrix[-self.n_steps:]))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-        noteStateMatrixToMidi(statematrix[:length], filename)
+        noteStateMatrixToMidi(statematrix[n_steps:], filename)
 
     def save(self, filename):
         with open(abspath(filename), 'w') as f:
@@ -86,8 +90,8 @@ def model(n_steps):
     model.add(Reshape(flat_shape, input_shape=input_shape))
     model.add(LSTM(512, return_sequences=True))
     model.add(LSTM(256, return_sequences=True))
-    model.add(LSTM(np.prod(shape), return_sequences=True))
-    model.add(Reshape(input_shape))
+    model.add(LSTM(np.prod(state_shape)))
+    model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
