@@ -61,26 +61,20 @@ class Lirit(object):
         it's seeded with random numbers
         '''
         statematrix = None
-        noneseed = seed is None
+        offset = 0
         if seed is None:
+            offset = self.n_steps
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = (seed > .85) * 1
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = np.append(seed[0], predict[0])
-        if noneseed:
-            self._compose_helper(filename, offset=self.n_steps)
-        else:
-            self._compose_helper(filename)
-
-    def _compose_helper(self, filename, offset=0):
         while len(statematrix) < length + offset:
             predict = cleanstatematrix(
                 self.model.predict(statematrix[-self.n_steps:]))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-        noteStateMatrixToMidi(
-            statematrix[offset:], filename)
+        noteStateMatrixToMidi(statematrix[offset:], filename)
 
     def save(self, filename):
         self.model.save(abspath(filename))
