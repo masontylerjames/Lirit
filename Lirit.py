@@ -1,4 +1,4 @@
-from keras.layers import LSTM, Activation, Reshape
+from keras.layers import LSTM, Reshape
 from keras.models import Sequential
 from os import listdir
 from os.path import abspath
@@ -37,7 +37,7 @@ class Lirit(object):
                 Y += Y_f
         else:
             statematrix = midiToStateMatrix(
-                filename, self.lowerBound, self.upperBound)
+                filenames, self.lowerBound, self.upperBound)
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
         self.model.fit(X, Y, **kwargs)
 
