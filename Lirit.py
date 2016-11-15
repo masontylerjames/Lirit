@@ -51,7 +51,7 @@ class Lirit(object):
             Y += Y_f
         self.model.fit(X, Y, **kwargs)
 
-    def compose(self, length, filename='example', seed=None):
+    def compose(self, length, filename='example', seed=None, verbose=False):
         '''
         INPUT: int
 
@@ -61,20 +61,21 @@ class Lirit(object):
         it's seeded with random numbers and then set to 1s and 0s based on a threshold
         '''
         statematrix = None
-        offset = 0
+        sm_offset = 0
         if seed is None:
-            offset = self.n_steps
+            sm_offset = self.n_steps
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = (seed > .85) * 1
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = np.append(seed[0], predict, axis=0)
-        while len(statematrix) < length + offset:
-            print len(statematrix)
+        while len(statematrix) < length + sm_offset:
+            if verbose:
+                print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
             predict = cleanstatematrix(
                 self.model.predict(statematrix[-self.n_steps:][np.newaxis]))
             statematrix = np.append(statematrix, predict, axis=0)
-        noteStateMatrixToMidi(statematrix[offset:], filename)
+        noteStateMatrixToMidi(statematrix[sm_offset:], filename)
 
     def save(self, filename):
         self.model.save(abspath(filename))
