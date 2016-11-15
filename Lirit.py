@@ -70,9 +70,7 @@ class Lirit(object):
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = np.append(seed[0], predict, axis=0)
         while len(statematrix) < length + offset:
-            perc10 = (length - self.n_steps + offset) / 10
-            if len(statematrix) % perc10 == 0:
-                print '{}% done'.format(len(statematrix) / perc10 * 10)
+            print len(statematrix)
             predict = cleanstatematrix(
                 self.model.predict(statematrix[-self.n_steps:][np.newaxis]))
             statematrix = np.append(statematrix, predict, axis=0)
