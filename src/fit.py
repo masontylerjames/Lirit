@@ -1,14 +1,16 @@
 from os import listdir
 from os.path import isfile, join, abspath
+from src.miditransform import state_shape as shape
 import numpy as np
 
 
-def cleanstatematrix(statematrix, shape):
-    sm = statematrix > .5
+def cleanstatematrix(statematrix):
+    sample = np.random.random(shape)
+    sm = sample < statematrix
     return sm * 1
 
 
-def generateXY(statematrix, n_steps, offset, shape):
+def generateXY(statematrix, n_steps, offset):
     '''
     INPUT: statematrix
     OUTPUT: list of statematrix slices, list of statematrix slices

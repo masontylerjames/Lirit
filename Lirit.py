@@ -1,9 +1,9 @@
-from keras.layers import LSTM, Activation, Reshape
+from keras.layers import LSTM, Reshape
 from keras.models import Sequential
-from os import listdir
 from os.path import abspath
-from fit import getfiles, generateXY, cleanstatematrix
-from miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.fit import getfiles, generateXY, cleanstatematrix
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.miditransform import state_shape as shape
 import cPickle as pickle
 import numpy as np
 
@@ -12,11 +12,8 @@ class Lirit(object):
 
     def __init__(self, n_steps=256, offset=128):
         self.n_steps = n_steps
-        self.lowerBound = 21
-        self.upperBound = 108
-        self.shape = (self.upperBound - self.lowerBound, 2)
         self.offset = offset
-        self.model = model(self.n_steps, self.shape)
+        self.model = model(self.n_steps)
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
@@ -24,20 +21,16 @@ class Lirit(object):
     def fitmidis(self, filenames, **kwargs):
         X, Y = [], []
         if isinstance(filenames, list):
-            statematrix = midiToStateMatrix(
-                filenames[0], self.lowerBound, self.upperBound)
-            X, Y = generateXY(
-                statematrix, self.n_steps, self.offset, self.shape)
+            statematrix = midiToStateMatrix(filenames[0])
+            X, Y = generateXY(statematrix, self.n_steps, self.offset)
             for f in filenames[1:]:
-                statematrix = midiToStateMatrix(
-                    f, self.lowerBound, self.upperBound)
+                statematrix = midiToStateMatrix(f)
                 X_f, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset, self.shape)
+                    statematrix, self.n_steps, self.offset)
                 X += X_f
                 Y += Y_f
         else:
-            statematrix = midiToStateMatrix(
-                filename, self.lowerBound, self.upperBound)
+            statematrix = midiToStateMatrix(filenames)
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
         self.model.fit(X, Y, **kwargs)
 
@@ -45,11 +38,10 @@ class Lirit(object):
         files = getfiles(dirs)
         print '{} in pipeline'.format(files[0].split('/')[-1])
         X, Y = generateXY(midiToStateMatrix(
-            files[0], self.lowerBound, self.upperBound), self.n_steps, self.offset)
+            files[0]), self.n_steps, self.offset)
         for f in files[1:]:
             print '{} in pipeline'.format(f.split('/')[-1])
-            statematrix = midiToStateMatrix(
-                f, self.lowerBound, self.upperBound)
+            statematrix = midiToStateMatrix(f)
             X_f, Y_f = generateXY(
                 statematrix, self.n_steps, self.offset)
             X += X_f
@@ -70,23 +62,20 @@ class Lirit(object):
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = seed > .9
-        predict = cleanstatematrix(
-            self.model.predict(seed), self.shape)
+        predict = cleanstatematrix(self.model.predict(seed))
         statematrix = predict[0]
         while len(statematrix) < length:
-            predict = cleanstatematrix(
-                self.model.predict(predict), self.shape)
+            predict = cleanstatematrix(self.model.predict(predict))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-        noteStateMatrixToMidi(
-            statematrix[:length], self.lowerBound, self.upperBound, filename)
+        noteStateMatrixToMidi(statematrix[:length], filename)
 
     def save(self, filename):
         with open(abspath(filename), 'w') as f:
             pickle.dump(self, f)
 
 
-def model(n_steps, shape):
+def model(n_steps):
     '''
     OUTPUT: a compiled model
     '''
@@ -95,32 +84,12 @@ def model(n_steps, shape):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(512, activation='softplus', return_sequences=True))
-    model.add(LSTM(256, activation='softplus', return_sequences=True))
+    model.add(LSTM(512, return_sequences=True))
+    model.add(LSTM(256, return_sequences=True))
     model.add(LSTM(np.prod(shape), return_sequences=True))
-    model.add(Activation('sigmoid'))
     model.add(Reshape(input_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
 if __name__ == '__main__':
-    lirit = Lirit()
-    midis = [abspath('data/train/mozart/mz_311_1_format0.mid')] * 20
-    # collection = [abspath('data/train') + '/' +
-    #               d for d in listdir('data/train')]
-    # lirit.fitcollection(collection)
-    lirit.fitmidis(midis, nb_epoch=20)
-    # lirit.save('lirit.pkl')
-
-    seed = np.array([midiToStateMatrix(
-        abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
-    proba = lirit.model.predict(seed)
-
-    # l = 1411
-    # for i in range(1):
-    #     filename = 'test{}'.format(i)
-    #     seed = np.array([midiToStateMatrix(
-    #         abspath('data/train/mozart/mz_311_1_format0.mid'), 21, 108)[:256]])
-    #     lirit.compose(l, filename, seed=seed)
-    #     sm = midiToStateMatrix(filename + '.mid', 21, 108)
-    #     print np.array(sm).shape
+    pass

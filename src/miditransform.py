@@ -3,9 +3,12 @@ import numpy as np
 
 # lowerBound = 16  # midi pitch corresponding to just above 20 Hz
 # upperBound = 135  # midi pitch corresponding to just below 20 kHz
+lowerBound = 21
+upperBound = 108
+state_shape = (upperBound - lowerBound, 2)
 
 
-def midiToStateMatrix(midifile, lowerBound, upperBound):
+def midiToStateMatrix(midifile):
     '''
     INPUT: str
     OUTPUT: numpy array
@@ -90,7 +93,7 @@ def midiToStateMatrix(midifile, lowerBound, upperBound):
     return statematrix
 
 
-def noteStateMatrixToMidi(statematrix, lowerBound, upperBound, filename="example"):
+def noteStateMatrixToMidi(statematrix, filename="example"):
     statematrix = np.asarray(statematrix)
     pattern = midi.Pattern()
     track = midi.Track()
