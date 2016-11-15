@@ -30,3 +30,5 @@ def notes_on(lirit, n=0, **kwargs):
 
 if __name__ == '__main__':
     lirit = Lirit()
+    sm = midiToStateMatrix('data/train/mozart/mz_311_1_format0.mid')
+    seed = np.array(sm[:256])[np.newaxis]
