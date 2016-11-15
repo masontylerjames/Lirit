@@ -68,12 +68,11 @@ class Lirit(object):
             seed = seed[np.newaxis]
             seed = (seed > .85) * 1
         predict = cleanstatematrix(self.model.predict(seed))
-        statematrix = np.append(seed[0], predict[0])
+        statematrix = np.append(seed[0], predict)
         while len(statematrix) < length + offset:
             predict = cleanstatematrix(
                 self.model.predict(statematrix[-self.n_steps:]))
-            statematrix = np.append(statematrix, predict[
-                                    0][-self.offset:], axis=0)
+            statematrix = np.append(statematrix, predict)
         noteStateMatrixToMidi(statematrix[offset:], filename)
 
     def save(self, filename):
