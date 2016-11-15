@@ -1,11 +1,12 @@
 from os import listdir
 from os.path import isfile, join, abspath
-import numpy as np
 from src.miditransform import state_shape as shape
+import numpy as np
 
 
 def cleanstatematrix(statematrix):
-    sm = statematrix > .5
+    sample = np.random.random(shape)
+    sm = sample < statematrix
     return sm * 1
 
 

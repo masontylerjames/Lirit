@@ -19,7 +19,7 @@ def buildBeat(time):
 
 def singleStatetoInput(state, time):
     beat = buildBeat(time)
-    return [note for note in range(len(state))]
+    return [note + beat for i, note in enumerate(state)]
 
 
 def stateMatrixtoInput(statematrix):
