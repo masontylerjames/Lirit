@@ -2,8 +2,8 @@ from keras.layers import LSTM, Activation, Reshape
 from keras.models import Sequential
 from os import listdir
 from os.path import abspath
-from fit import getfiles, generateXY, cleanstatematrix
-from miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.fit import getfiles, generateXY, cleanstatematrix
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import cPickle as pickle
 import numpy as np
 
