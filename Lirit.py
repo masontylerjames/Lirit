@@ -1,9 +1,9 @@
 from keras.layers import LSTM, Reshape
 from keras.models import Sequential
-from os import listdir
 from os.path import abspath
 from src.fit import getfiles, generateXY, cleanstatematrix
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.miditransform import state_shape as shape
 import cPickle as pickle
 import numpy as np
 
@@ -13,7 +13,7 @@ class Lirit(object):
     def __init__(self, n_steps=256, offset=128):
         self.n_steps = n_steps
         self.offset = offset
-        self.model = model(self.n_steps, self.shape)
+        self.model = model(self.n_steps)
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
@@ -75,7 +75,7 @@ class Lirit(object):
             pickle.dump(self, f)
 
 
-def model(n_steps, shape):
+def model(n_steps):
     '''
     OUTPUT: a compiled model
     '''
