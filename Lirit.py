@@ -88,8 +88,8 @@ def model(n_steps):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(512))
-    model.add(LSTM(256))
+    model.add(LSTM(512, return_sequences=True))
+    model.add(LSTM(256, return_sequences=True))
     model.add(LSTM(np.prod(state_shape)))
     model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
