@@ -1,5 +1,5 @@
 from keras.layers import LSTM, Reshape
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from os.path import abspath
 from src.fit import getfiles, generateXY, cleanstatematrix
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
@@ -61,22 +61,32 @@ class Lirit(object):
         it's seeded with random numbers
         '''
         statematrix = None
+        noneseed = seed is None
         if seed is None:
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = (seed > .85) * 1
         predict = cleanstatematrix(self.model.predict(seed))
         statematrix = np.append(seed[0], predict[0])
-        while len(statematrix) < length + self.n_steps:
+        if noneseed:
+            self._compose_helper(filename, offset=self.n_steps)
+        else:
+            self._compose_helper(filename)
+
+    def _compose_helper(self, filename, offset=0):
+        while len(statematrix) < length + offset:
             predict = cleanstatematrix(
                 self.model.predict(statematrix[-self.n_steps:]))
             statematrix = np.append(statematrix, predict[
                                     0][-self.offset:], axis=0)
-        noteStateMatrixToMidi(statematrix[n_steps:], filename)
+        noteStateMatrixToMidi(
+            statematrix[offset:], filename)
 
     def save(self, filename):
-        with open(abspath(filename), 'w') as f:
-            pickle.dump(self, f)
+        self.model.save(abspath(filename))
+
+    def load(self, filename):
+        self.model = load_model(filename)
 
 
 def model(n_steps):
