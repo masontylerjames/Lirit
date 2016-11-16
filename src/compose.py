@@ -42,4 +42,4 @@ def _calcConservatism(statematrix):
     '''
     notes = statematrix.sum(axis=1)[:, 0]
     mean = np.mean(notes[-64:])
-    return np.exp((mean - 2) / 10)
+    return np.min()(1, np.exp((mean - 2) / 10)))

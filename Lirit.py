@@ -64,8 +64,9 @@ class Lirit(object):
         while len(statematrix) < length + sm_offset:
             if verbose:
                 print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
-            predict = outputToState(
-                self.model.predict(statematrix[-self.n_steps:][np.newaxis]), statematrix)
+            newseed = self.model.predict(
+                statematrix[-self.n_steps:][np.newaxis])
+            predict = outputToState(newseed, statematrix)
             statematrix = np.append(statematrix, predict, axis=0)
 
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
