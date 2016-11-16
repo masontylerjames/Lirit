@@ -1,7 +1,8 @@
 from keras.layers import LSTM, Reshape, Activation
 from keras.models import Sequential, load_model
 from os.path import abspath
-from src.fit import getfiles, generateXY, cleanstatematrix
+from src.fit import getfiles, generateXY
+from src.compose import outputToState
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
@@ -66,12 +67,12 @@ class Lirit(object):
             seed = np.random.random(self.input_shape)
             seed = seed[np.newaxis]
             seed = (seed > .85) * 1
-        predict = cleanstatematrix(self.model.predict(seed))
+        predict = outputToState(self.model.predict(seed))
         statematrix = np.append(seed[0], predict, axis=0)
         while len(statematrix) < length + sm_offset:
             if verbose:
                 print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
-            predict = cleanstatematrix(
+            predict = outputToState(
                 self.model.predict(statematrix[-self.n_steps:][np.newaxis]))
             statematrix = np.append(statematrix, predict, axis=0)
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
