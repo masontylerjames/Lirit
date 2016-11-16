@@ -28,9 +28,9 @@ def _sampleByProba(state):
     return a matrix of binary values based on a matrix of probabilites
     P(note) and P(actuate|note)
     '''
-    state[:, 0] = np.random.random(len(state)) < state[:, 0]
-    state[:, 1] = np.random.random(len(state)) < state[:, 1]
-    state[:, 1] = state[:, 1] * state[:0]
+    state[0, :, 0] = np.random.random(len(state)) < state[0, :, 0]
+    state[0, :, 1] = np.random.random(len(state)) < state[0, :, 1]
+    state[0, :, 1] = state[0, :, 1] * state[0, :, 0]
     return state * 1
 
 
