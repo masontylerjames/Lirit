@@ -7,5 +7,5 @@ if __name__ == '__main__':
     lirit.load('data/models/newtest.h5')
     l = 5497 / 2
     sm = midiToStateMatrix('data/train/mozart/mz_311_1_format0.mid')
-    seed = np.array(sm)[:256][np.newaxis]
+    seed = np.array(sm)[:lirit.n_steps][np.newaxis]
     lirit.compose(l, filename='test', seed=seed, verbose=True)
