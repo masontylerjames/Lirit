@@ -49,21 +49,21 @@ class Lirit(object):
 
         length: length of the resulting music piece in number of 32nd notes
         filename: the name of the file where the result is saved
-        seed: a single input entry for the neural network to start with. If None
-        it's seeded with random numbers and then set to 1s and 0s based on a threshold
+        seed: a single input entry for the neural network to start with. If
+        None a seed is randomly generated
         '''
         statematrix = None
         sm_offset = 0
         if seed is None:
             sm_offset = self.n_steps
             seed = generateSeed(self.input_shape)
-        predict = outputToState(self.model.predict(seed))
+        predict = outputToState(self.model.predict(seed), seed[0])
         statematrix = np.append(seed[0], predict, axis=0)
         while len(statematrix) < length + sm_offset:
             if verbose:
                 print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
             predict = outputToState(
-                self.model.predict(statematrix[-self.n_steps:][np.newaxis]))
+                self.model.predict(statematrix[-self.n_steps:][np.newaxis]), statematrix)
             statematrix = np.append(statematrix, predict, axis=0)
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
 
