@@ -7,9 +7,10 @@ def outputToState(output, statematrix):
     statematrix state
     '''
     # modify the probabilites of the output based on previous behavior
-    conservatism = _calcConservatism(statematrix)
-    state = output**conservatism
+    # conservatism = _calcConservatism(statematrix)
+    # state = output**conservatism
 
+    state = output
     state = _sampleByProba(state)
     return state
 
