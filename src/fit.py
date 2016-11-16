@@ -5,6 +5,7 @@ import numpy as np
 
 
 def cleanstatematrix(statematrix):
+    import pdb; pdb.set_trace()
     sample = np.random.random(shape)
     sm = sample < statematrix
     return sm * 1
