@@ -14,8 +14,11 @@ def outputToState(output):
     return state
 
 
-def generateSeed():
-    pass
+def generateSeed(input_shape):
+    seed = np.random.random(input_shape)
+    seed = seed[np.newaxis]
+    seed = (seed > .85) * 1
+    return seed
 
 
 def _sampleByProba(state):
