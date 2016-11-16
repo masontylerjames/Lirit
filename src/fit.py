@@ -5,7 +5,8 @@ import numpy as np
 
 
 def cleanstatematrix(statematrix):
-    import pdb; pdb.set_trace()
+    import pdb
+    pdb.set_trace()
     sample = np.random.random(shape)
     sm = sample < statematrix
     return sm * 1
@@ -18,7 +19,6 @@ def generateXY(statematrix, n_steps, offset):
     '''
     X, Y = [], []
     i = 0
-    single = [[0 for k in range(shape[1])] for j in range(shape[0])]
     for i in range(len(statematrix) - n_steps):
         Xi = (offset * i, n_steps + offset * i)
         X_slice = statematrix[Xi[0]:Xi[1]]
