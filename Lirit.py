@@ -24,9 +24,11 @@ class Lirit(object):
     def fitmidis(self, filenames, **kwargs):
         X, Y = [], []
         if isinstance(filenames, list):
+            print '{} in pipeline'.format(files[0].split('/')[-1])
             statematrix = midiToStateMatrix(filenames[0])
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
             for f in filenames[1:]:
+                print '{} in pipeline'.format(files[0].split('/')[-1])
                 statematrix = midiToStateMatrix(f)
                 X_f, Y_f = generateXY(
                     statematrix, self.n_steps, self.offset)
@@ -39,17 +41,7 @@ class Lirit(object):
 
     def fitcollection(self, dirs, **kwargs):
         files = getfiles(dirs)
-        print '{} in pipeline'.format(files[0].split('/')[-1])
-        X, Y = generateXY(midiToStateMatrix(
-            files[0]), self.n_steps, self.offset)
-        for f in files[1:]:
-            print '{} in pipeline'.format(f.split('/')[-1])
-            statematrix = midiToStateMatrix(f)
-            X_f, Y_f = generateXY(
-                statematrix, self.n_steps, self.offset)
-            X += X_f
-            Y += Y_f
-        self.model.fit(X, Y, **kwargs)
+        fitmidis(files, **kwargs)
 
     def compose(self, length, filename='example', seed=None, verbose=False):
         '''
