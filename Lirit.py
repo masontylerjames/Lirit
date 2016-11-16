@@ -12,7 +12,7 @@ shape = state_shape
 
 class Lirit(object):
 
-    def __init__(self, n_steps=256):
+    def __init__(self, n_steps=128):
         self.n_steps = n_steps
         self.offset = 1
         self.model = model(self.n_steps)
