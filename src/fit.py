@@ -4,14 +4,6 @@ from src.miditransform import state_shape as shape
 import numpy as np
 
 
-def cleanstatematrix(statematrix):
-    import pdb
-    pdb.set_trace()
-    sample = np.random.random(shape)
-    sm = sample < statematrix
-    return sm * 1
-
-
 def generateXY(statematrix, n_steps, offset):
     '''
     INPUT: statematrix
