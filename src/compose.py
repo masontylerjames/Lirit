@@ -41,5 +41,5 @@ def _calcConservatism(statematrix):
     values on (1,inf) decrease the probability
     '''
     notes = statematrix.sum(axis=1)[:, 0]
-    mean = np.mean(notes[-128:])
+    mean = np.mean(notes)
     return np.exp((mean - 2) / 100)
