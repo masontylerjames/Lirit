@@ -37,6 +37,8 @@ class Lirit(object):
         else:
             statematrix = midiToStateMatrix(filenames)
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
+            X = self._reshapeInput(X)
+            Y = self._reshapeInput(Y)
         self.model.fit(X, Y, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
@@ -57,6 +59,7 @@ class Lirit(object):
         if seed is None:
             sm_offset = self.n_steps
             seed = generateSeed(self.input_shape)
+            seed = self._reshapeInput(seed)
 
         predict = outputToState(self.model.predict(seed), seed[0])
         statematrix = np.append(seed[0], predict, axis=0)
@@ -69,6 +72,7 @@ class Lirit(object):
             predict = outputToState(newseed, statematrix)
             statematrix = np.append(statematrix, predict, axis=0)
 
+        statematrix = self._reshapeOutput(statematrix)
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
 
     def save(self, filename):
@@ -76,6 +80,19 @@ class Lirit(object):
 
     def load(self, filename):
         self.model = load_model(filename)
+
+    def _reshapeInput(self, inputdata):
+        inputdata = np.asarray(inputdata)
+        inputshape = inputdata.shape
+        newshape = np.append(
+            inputshape[:-2], np.prod(inputshape[-2:]))
+        return np.reshape(inputdata, newshape)
+
+    def _reshapeOutput(self, outputdata):
+        outputdata = np.asarray(outputdata)
+        outputshape = outputdata.shape
+        newshape = np.append(outputshape[:-1], state_shape)
+        return np.reshape(outputdata, newshape)
 
 
 def model(n_steps):
@@ -86,12 +103,12 @@ def model(n_steps):
     flat_shape = (n_steps, np.prod(shape))
     model = Sequential()
     # flattens the state matrix for LSTM
-    model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(256, return_sequences=True))
+    # model.add(Reshape(flat_shape, input_shape=input_shape))
+    model.add(LSTM(256, return_sequences=True, input_shape=flat_shape))
     model.add(LSTM(256))
     model.add(Dense(np.prod(shape)))
     model.add(Activation('sigmoid'))
-    model.add(Reshape(state_shape))
+    # model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
 
