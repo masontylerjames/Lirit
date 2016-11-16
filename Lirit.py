@@ -1,4 +1,4 @@
-from keras.layers import LSTM, Reshape, Activation
+from keras.layers import LSTM, Reshape, Activation, Dense
 from keras.models import Sequential, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
@@ -88,7 +88,8 @@ def model(n_steps):
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
     model.add(LSTM(256, return_sequences=True))
-    model.add(LSTM(np.prod(state_shape)))
+    model.add(LSTM(256))
+    model.add(Dense(np.prod(shape)))
     model.add(Activation('sigmoid'))
     model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
