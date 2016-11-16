@@ -1,4 +1,4 @@
-from keras.layers import LSTM, Reshape, Activation
+from keras.layers import LSTM, Reshape, Activation, Dense
 from keras.models import Sequential, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
@@ -12,7 +12,7 @@ shape = state_shape
 
 class Lirit(object):
 
-    def __init__(self, n_steps=256):
+    def __init__(self, n_steps=128):
         self.n_steps = n_steps
         self.offset = 1
         self.model = model(self.n_steps)
@@ -24,11 +24,11 @@ class Lirit(object):
     def fitmidis(self, filenames, **kwargs):
         X, Y = [], []
         if isinstance(filenames, list):
-            print '{} in pipeline'.format(files[0].split('/')[-1])
+            print '{} in pipeline'.format(filenames[0].split('/')[-1])
             statematrix = midiToStateMatrix(filenames[0])
             X, Y = generateXY(statematrix, self.n_steps, self.offset)
             for f in filenames[1:]:
-                print '{} in pipeline'.format(files[0].split('/')[-1])
+                print '{} in pipeline'.format(filenames[0].split('/')[-1])
                 statematrix = midiToStateMatrix(f)
                 X_f, Y_f = generateXY(
                     statematrix, self.n_steps, self.offset)
@@ -41,7 +41,7 @@ class Lirit(object):
 
     def fitcollection(self, dirs, **kwargs):
         files = getfiles(dirs)
-        fitmidis(files, **kwargs)
+        self.fitmidis(files, **kwargs)
 
     def compose(self, length, filename='example', seed=None, verbose=False):
         '''
@@ -88,7 +88,8 @@ def model(n_steps):
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
     model.add(LSTM(256, return_sequences=True))
-    model.add(LSTM(np.prod(state_shape)))
+    model.add(LSTM(256))
+    model.add(Dense(np.prod(shape)))
     model.add(Activation('sigmoid'))
     model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')

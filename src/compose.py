@@ -7,9 +7,10 @@ def outputToState(output, statematrix):
     statematrix state
     '''
     # modify the probabilites of the output based on previous behavior
-    conservatism = _calcConservatism(statematrix)
-    state = output**conservatism
+    # conservatism = _calcConservatism(statematrix)
+    # state = output**conservatism
 
+    state = output
     state = _sampleByProba(state)
     return state
 
@@ -41,5 +42,5 @@ def _calcConservatism(statematrix):
     values on (1,inf) decrease the probability
     '''
     notes = statematrix.sum(axis=1)[:, 0]
-    mean = np.mean(notes[-128:])
+    mean = np.mean(notes)
     return np.exp((mean - 2) / 100)
