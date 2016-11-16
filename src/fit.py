@@ -1,7 +1,5 @@
 from os import listdir
 from os.path import isfile, join, abspath
-from src.miditransform import state_shape as shape
-import numpy as np
 
 
 def generateXY(statematrix, n_steps, offset):

@@ -1,8 +1,8 @@
 from keras.layers import LSTM, Reshape, Activation
 from keras.models import Sequential, load_model
 from os.path import abspath
-from src.fit import getfiles, generateXY
 from src.compose import outputToState
+from src.fit import getfiles, generateXY
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
