@@ -57,14 +57,17 @@ class Lirit(object):
         if seed is None:
             sm_offset = self.n_steps
             seed = generateSeed(self.input_shape)
+
         predict = outputToState(self.model.predict(seed), seed[0])
         statematrix = np.append(seed[0], predict, axis=0)
+
         while len(statematrix) < length + sm_offset:
             if verbose:
                 print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
             predict = outputToState(
                 self.model.predict(statematrix[-self.n_steps:][np.newaxis]), statematrix)
             statematrix = np.append(statematrix, predict, axis=0)
+
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
 
     def save(self, filename):
