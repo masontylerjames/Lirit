@@ -1,10 +1,9 @@
-from keras.layers import LSTM, Reshape
+from keras.layers import LSTM, Reshape, Activation
 from keras.models import Sequential, load_model
 from os.path import abspath
 from src.fit import getfiles, generateXY, cleanstatematrix
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
-import cPickle as pickle
 import numpy as np
 
 shape = state_shape
@@ -93,9 +92,9 @@ def model(n_steps):
     model = Sequential()
     # flattens the state matrix for LSTM
     model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(512, return_sequences=True))
     model.add(LSTM(256, return_sequences=True))
     model.add(LSTM(np.prod(state_shape)))
+    model.add(Activation('sigmoid'))
     model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
