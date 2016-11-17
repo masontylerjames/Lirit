@@ -1,14 +1,13 @@
-from keras.layers import LSTM, Reshape, Activation, Dense
+from keras.layers import LSTM, Reshape, Activation, Dense, Convolution2D, TimeDistributed
 from keras.models import Sequential, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.fit import getfiles, generateXY
-from src.features import noteStateMatrixToInputForm
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
 
-shape = (87, 25)
+shape = state_shape
 
 
 class Lirit(object):
@@ -27,24 +26,17 @@ class Lirit(object):
         if isinstance(filenames, list):
             print '{} in pipeline'.format(filenames[0].split('/')[-1])
             statematrix = midiToStateMatrix(filenames[0])
-            X_, Y = generateXY(statematrix, self.n_steps, self.offset)
-            statematrix = noteStateMatrixToInputForm(statematrix)
-            X, Y_ = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps, self.offset)
             for f in filenames[1:]:
                 print '{} in pipeline'.format(filenames[0].split('/')[-1])
                 statematrix = midiToStateMatrix(f)
-                X_, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset)
-                statematrix = noteStateMatrixToInputForm(statematrix)
-                X_f, Y_ = generateXY(
+                X_f, Y_f = generateXY(
                     statematrix, self.n_steps, self.offset)
                 X += X_f
                 Y += Y_f
         else:
             statematrix = midiToStateMatrix(filenames)
-            X_, Y = generateXY(statematrix, self.n_steps, self.offset)
-            statematrix = noteStateMatrixToInputForm(statematrix)
-            X, Y_ = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps, self.offset)
             X = self._reshapeInput(X)
             Y = self._reshapeInput(Y)
         self.model.fit(X, Y, **kwargs)
@@ -71,7 +63,7 @@ class Lirit(object):
             seed = self._reshapeInput(seed)
 
         probas = self.model.predict(seed)  # generate probabilites
-        # turn probas into predictions with dimensions 87xn
+        # turn probas into predictions with dimensions 87x2
         predict = outputToState(self._reshapeOutput(
             probas), self._reshapeOutput(seed[0]))
         # append flattened  predictions to statematrix
@@ -84,7 +76,7 @@ class Lirit(object):
             # generate probabilites
             probas = self.model.predict(
                 statematrix[-self.n_steps:][np.newaxis])
-            # turn probas into predictions with dimensions 87xn
+            # turn probas into predictions with dimensions 87x2
             predict = outputToState(self._reshapeOutput(
                 probas), self._reshapeOutput(statematrix))
             # append flattened  predictions to statematrix
@@ -105,8 +97,6 @@ class Lirit(object):
         inputshape = inputdata.shape
         newshape = np.append(
             inputshape[:-2], np.prod(inputshape[-2:]))
-        import pdb
-        pdb.set_trace()
         return np.reshape(inputdata, newshape)
 
     def _reshapeOutput(self, outputdata):
@@ -117,6 +107,22 @@ class Lirit(object):
 
 
 def model(n_steps):
+    input_shape = (n_steps, shape[0], shape[1])
+    flat_shape = (n_steps, np.prod(shape))
+    model = Sequential()
+    model.add(
+        Reshape((n_steps, shape[0], shape[1], 1), input_shape=flat_shape))
+    model.add(TimeDistributed(Convolution2D(12, 12, 2)))
+    model.add(Reshape((n_steps, (shape[0] - 12 + 1) * 12)))
+    model.add(LSTM(512, return_sequences=True, input_shape=flat_shape))
+    model.add(LSTM(512))
+    model.add(Dense(np.prod(shape)))
+    model.add(Activation('sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='sgd')
+    return model
+
+
+def oldmodel(n_steps):
     '''
     OUTPUT: a compiled model
     '''
@@ -125,10 +131,9 @@ def model(n_steps):
     model = Sequential()
     # flattens the state matrix for LSTM
     # model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(256, return_sequences=True,
-                   input_shape=(flat_shape)))
+    model.add(LSTM(256, return_sequences=True, input_shape=flat_shape))
     model.add(LSTM(256))
-    model.add(Dense(np.prod(state_shape)))
+    model.add(Dense(np.prod(shape)))
     model.add(Activation('sigmoid'))
     # model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')
