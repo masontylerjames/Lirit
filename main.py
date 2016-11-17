@@ -9,4 +9,5 @@ if __name__ == '__main__':
     l = 5497 / 2
     sm = midiToStateMatrix('data/train/mozart/mz_311_1_format0.mid')
     seed = np.array(sm)[:lirit.n_steps][np.newaxis]
+    lirit.save('autotestmodel.h5')
     lirit.compose(l, filename='autotest', seed=seed, verbose=True)
