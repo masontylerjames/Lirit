@@ -90,7 +90,7 @@ def midiToStateMatrix(midifile):
 
         time += 1
 
-    return statematrix
+    return np.asarray(statematrix)
 
 
 def noteStateMatrixToMidi(statematrix, filename="example"):
