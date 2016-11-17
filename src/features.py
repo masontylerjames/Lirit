@@ -1,6 +1,8 @@
 import itertools
 from src.miditransform import upperBound, lowerBound
 
+features_shape = (upperBound - lowerBound, 25)
+
 
 def getOrDefault(l, i, d):
     try:
