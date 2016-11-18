@@ -111,35 +111,35 @@ def model(n_steps):
     '''
     OUTPUT: a compiled model
     '''
-    inputs = [Input(shape=(n_steps, features_shape[1]))
-              for i in range(state_shape[0])]
-    # slices_1 = [Lambda(lambda x: x[:, :, i, :], output_shape=(
-    # None, 87, features_shape[1]))(inputs) for i in
-    # range(state_shape[0])]
-    time_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(inputlayer)
-                   for inputlayer in inputs]
+    inputs = Input(shape=(n_steps, state_shape[0], features_shape[1]))
+    slices_1 = [Lambda(lambda x: x[:, :, i, :], output_shape=(
+        n_steps, features_shape[1]))(inputs) for i in
+        range(state_shape[0])]
+    time_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(layer)
+                   for layer in slices_1]
     reshape_time = [Reshape((n_steps, 1, features_shape[1]))(layer)
                     for layer in time_lstm_1]
     cohesive_1 = merge(reshape_time, mode='concat', concat_axis=-2)
-    permute = Permute((2, 1, 3))(cohesive_1)
+    permute_1 = Permute((2, 1, 3))(cohesive_1)
     slices_2 = [Lambda(lambda x: x[:, :, i, :], output_shape=(
-        None, 87, features_shape[1]))(permute) for i in range(n_steps)]
-    pitch_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(inputlayer)
+        state_shape[0], features_shape[1]))(permute_1) for i in range(n_steps)]
+    pitch_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(layer)
                     for layer in slices_2]
-    reshape_pitch = [
-        Reshape((state_shape[0], 1, features_shape[1]))]
-    cohesive_2 = merge(pitch_lstm_1, mode='concat', concat_axis=-1)
-    model = Model(input=inputs, output=cohesive_2)
-    # # flattens the state matrix for LSTM
-    # # model.add(Reshape(flat_shape, input_shape=input_shape))
-    # model.add(LSTM(256, return_sequences=True, input_shape=flat_shape))
-    # model.add(LSTM(256))
-    # model.add(Dense(np.prod(shape)))
-    # model.add(Activation('sigmoid'))
-    # # model.add(Reshape(state_shape))
-    # model.compile(loss='binary_crossentropy', optimizer='sgd')
+    reshape_pitch = [Reshape((state_shape[0], 1, features_shape[1]))(
+        layer) for layer in pitch_lstm_1]
+    cohesive_2 = merge(reshape_pitch, mode='concat', concat_axis=-2)
+    permute_2 = Permute((2, 1, 3))(cohesive_2)
+    reshape_1 = Reshape(
+        (n_steps, state_shape[0] * features_shape[1]))(permute_2)
+    time_lstm_2 = LSTM(state_shape[0] * state_shape[1])(reshape_1)
+    reshape_2 = Reshape((state_shape[0], state_shape[1]))(time_lstm_2)
+    model = Model(input=inputs, output=reshape_2)
     return model
 
+
+def model2(n_steps):
+    inputs = Input(shape=(n_steps, state_shape[0], features_shape[1]))
+    pass
 
 if __name__ == '__main__':
     pass
