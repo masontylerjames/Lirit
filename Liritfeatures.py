@@ -3,12 +3,12 @@ from keras.models import Sequential, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.fit import getfiles, generateXY
-from src.features import noteStateMatrixToInputForm
+from src.features import noteStateMatrixToInputForm, features_shape
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
 
-shape = (87, 25)
+shape = features_shape
 
 
 class Lirit(object):
@@ -27,24 +27,19 @@ class Lirit(object):
         if isinstance(filenames, list):
             print '{} in pipeline'.format(filenames[0].split('/')[-1])
             statematrix = midiToStateMatrix(filenames[0])
-            X_, Y = generateXY(statematrix, self.n_steps, self.offset)
-            statematrix = noteStateMatrixToInputForm(statematrix)
-            X, Y_ = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps,
+                              self.offset, features=True)
             for f in filenames[1:]:
                 print '{} in pipeline'.format(filenames[0].split('/')[-1])
                 statematrix = midiToStateMatrix(f)
-                X_, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset)
-                statematrix = noteStateMatrixToInputForm(statematrix)
-                X_f, Y_ = generateXY(
-                    statematrix, self.n_steps, self.offset)
+                X_f, Y_f = generateXY(
+                    statematrix, self.n_steps, self.offset, features=True)
                 X += X_f
                 Y += Y_f
         else:
             statematrix = midiToStateMatrix(filenames)
-            X_, Y = generateXY(statematrix, self.n_steps, self.offset)
-            statematrix = noteStateMatrixToInputForm(statematrix)
-            X, Y_ = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps,
+                              self.offset, features=True)
             X = self._reshapeInput(X)
             Y = self._reshapeInput(Y)
         self.model.fit(X, Y, **kwargs)

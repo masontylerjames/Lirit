@@ -1,20 +1,23 @@
+from features import noteStateMatrixToInputForm
 from os import listdir
 from os.path import isfile, join, abspath
+import numpy as np
 
 
-def generateXY(statematrix, n_steps, offset):
+def generateXY(statematrix, n_steps, offset, features=False):
     '''
     INPUT: statematrix
     OUTPUT: list of statematrix slices, list of statematrix slices
     '''
+    if offset == 0:
+        offset = 1
     X, Y = [], []
-    i = 0
-    for i in range(len(statematrix) - n_steps):
-        Xi = (offset * i, n_steps + offset * i)
-        X_slice = statematrix[Xi[0]:Xi[1]]
-        Y_slice = statematrix[Xi[1]]
-        X.append(X_slice)
-        Y.append(Y_slice)
+    feature_matrix = np.asarray(
+        noteStateMatrixToInputForm(statematrix)) if features else statematrix
+    steps = range(len(statematrix) - n_steps)
+    X = np.asarray(
+        [feature_matrix[offset * i:n_steps + offset * i] for i in steps])
+    Y = np.asarray([statematrix[n_steps + offset * i] for i in steps])
     return X, Y
 
 
