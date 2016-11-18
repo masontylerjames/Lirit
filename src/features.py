@@ -1,7 +1,7 @@
 import itertools
 from src.miditransform import upperBound, lowerBound
 
-features_shape = (upperBound - lowerBound, 79)
+features_shape = (upperBound - lowerBound, 2)
 
 
 def getOrDefault(l, i, d):
@@ -47,4 +47,6 @@ def noteStateSingleToInputForm(state, time):
 
 
 def noteStateMatrixToInputForm(statematrix):
-    return [noteStateSingleToInputForm(state, time) for time, state in enumerate(statematrix)]
+    # return [noteStateSingleToInputForm(state, time) for time, state in enumerate(statematrix)]
+    # temp disable
+    return statematrix

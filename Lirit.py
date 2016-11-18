@@ -1,13 +1,13 @@
-from keras.layers import LSTM, Reshape, Activation, Dense
-from keras.models import Sequential, load_model
+from keras.layers import LSTM, Lambda, Activation, Dense
+from keras.layers import Reshape, Input, merge, Permute
+from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.fit import getfiles, generateXY
+from src.features import features_shape
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
-
-shape = state_shape
 
 
 class Lirit(object):
@@ -16,7 +16,8 @@ class Lirit(object):
         self.n_steps = n_steps
         self.offset = 1
         self.model = model(self.n_steps)
-        self.input_shape = (n_steps, shape[0], shape[1])
+        self.input_shape = (n_steps, features_shape[
+                            0], features_shape[1])
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
@@ -110,18 +111,35 @@ def model(n_steps):
     '''
     OUTPUT: a compiled model
     '''
-    input_shape = (n_steps, shape[0], shape[1])
-    flat_shape = (n_steps, np.prod(shape))
-    model = Sequential()
-    # flattens the state matrix for LSTM
-    # model.add(Reshape(flat_shape, input_shape=input_shape))
-    model.add(LSTM(256, return_sequences=True, input_shape=flat_shape))
-    model.add(LSTM(256))
-    model.add(Dense(np.prod(shape)))
-    model.add(Activation('sigmoid'))
-    # model.add(Reshape(state_shape))
-    model.compile(loss='binary_crossentropy', optimizer='sgd')
+    inputs = [Input(shape=(n_steps, features_shape[1]))
+              for i in range(state_shape[0])]
+    # slices_1 = [Lambda(lambda x: x[:, :, i, :], output_shape=(
+    # None, 87, features_shape[1]))(inputs) for i in
+    # range(state_shape[0])]
+    time_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(inputlayer)
+                   for inputlayer in inputs]
+    reshape_time = [Reshape((n_steps, 1, features_shape[1]))(layer)
+                    for layer in time_lstm_1]
+    cohesive_1 = merge(reshape_time, mode='concat', concat_axis=-2)
+    permute = Permute((2, 1, 3))(cohesive_1)
+    slices_2 = [Lambda(lambda x: x[:, :, i, :], output_shape=(
+        None, 87, features_shape[1]))(permute) for i in range(n_steps)]
+    pitch_lstm_1 = [LSTM(features_shape[1], return_sequences=True)(inputlayer)
+                    for layer in slices_2]
+    reshape_pitch = [
+        Reshape((state_shape[0], 1, features_shape[1]))]
+    cohesive_2 = merge(pitch_lstm_1, mode='concat', concat_axis=-1)
+    model = Model(input=inputs, output=cohesive_2)
+    # # flattens the state matrix for LSTM
+    # # model.add(Reshape(flat_shape, input_shape=input_shape))
+    # model.add(LSTM(256, return_sequences=True, input_shape=flat_shape))
+    # model.add(LSTM(256))
+    # model.add(Dense(np.prod(shape)))
+    # model.add(Activation('sigmoid'))
+    # # model.add(Reshape(state_shape))
+    # model.compile(loss='binary_crossentropy', optimizer='sgd')
     return model
+
 
 if __name__ == '__main__':
     pass
