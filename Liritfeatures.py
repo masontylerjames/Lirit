@@ -3,12 +3,12 @@ from keras.models import Sequential, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.fit import getfiles, generateXY
-from src.features import noteStateMatrixToInputForm
+from src.features import noteStateMatrixToInputForm, features_shape
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 from src.miditransform import state_shape
 import numpy as np
 
-shape = (87, 25)
+shape = features_shape
 
 
 class Lirit(object):
@@ -27,19 +27,19 @@ class Lirit(object):
         if isinstance(filenames, list):
             print '{} in pipeline'.format(filenames[0].split('/')[-1])
             statematrix = midiToStateMatrix(filenames[0])
-            statematrix = noteStateMatrixToInputForm(statematrix)
-            X, Y = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps,
+                              self.offset, features=True)
             for f in filenames[1:]:
                 print '{} in pipeline'.format(filenames[0].split('/')[-1])
                 statematrix = midiToStateMatrix(f)
-                statematrix = noteStateMatrixToInputForm(statematrix)
                 X_f, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset)
+                    statematrix, self.n_steps, self.offset, features=True)
                 X += X_f
                 Y += Y_f
         else:
             statematrix = midiToStateMatrix(filenames)
-            X, Y = generateXY(statematrix, self.n_steps, self.offset)
+            X, Y = generateXY(statematrix, self.n_steps,
+                              self.offset, features=True)
             X = self._reshapeInput(X)
             Y = self._reshapeInput(Y)
         self.model.fit(X, Y, **kwargs)
@@ -121,7 +121,7 @@ def model(n_steps):
     model.add(LSTM(256, return_sequences=True,
                    input_shape=(flat_shape)))
     model.add(LSTM(256))
-    model.add(Dense(np.prod(shape)))
+    model.add(Dense(np.prod(state_shape)))
     model.add(Activation('sigmoid'))
     # model.add(Reshape(state_shape))
     model.compile(loss='binary_crossentropy', optimizer='sgd')

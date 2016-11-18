@@ -1,7 +1,7 @@
 import itertools
 from src.miditransform import upperBound, lowerBound
 
-features_shape = (upperBound - lowerBound, 25)
+features_shape = (upperBound - lowerBound, 79)
 
 
 def getOrDefault(l, i, d):
@@ -37,7 +37,7 @@ def noteInputForm(note, state, context, beat):
     part_context = context[pitchclass:] + context[:pitchclass]
 
     '''return part_position + part_pitchclass + part_prev_vicinity + part_context + beat + [0]'''
-    return part_position + part_pitchclass + part_context
+    return part_position + part_pitchclass + part_prev_vicinity + part_context + beat
 
 
 def noteStateSingleToInputForm(state, time):
@@ -47,8 +47,4 @@ def noteStateSingleToInputForm(state, time):
 
 
 def noteStateMatrixToInputForm(statematrix):
-    # NOTE: May have to transpose this or transform it in some way to make Theano like it
-    #[startSentinel()] +
-    inputform = [noteStateSingleToInputForm(
-        state, time) for time, state in enumerate(statematrix)]
-    return inputform
+    return [noteStateSingleToInputForm(state, time) for time, state in enumerate(statematrix)]
