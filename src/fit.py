@@ -1,7 +1,13 @@
-from features import noteStateMatrixToInputForm
+from features import noteStateMatrixToInputForm, features_shape
 from os import listdir
 from os.path import isfile, join, abspath
 import numpy as np
+
+
+def splitX(X):
+    X_feat = [X[:, :, :, i] for i in range(features_shape[1])]
+    X_pitch = [X[:, :, i, :] for i in range(features_shape[0])]
+    return X_feat + X_pitch
 
 
 def generateXY(statematrix, n_steps, offset, features=False):

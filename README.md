@@ -30,3 +30,20 @@
     - could do shared weights for on/off and actuation
     - use 2d convolution on each time slice individually to do pseudo feature engineering
     - take beats as an input
+
+11/18
+  Things to try
+  - provide beat to the model in some way
+  - provide pitch class to the model in some way
+  - provide pitch information to the model
+  - the model could learn the idea of a key eventually, maybe through convolution, can that be bootstrapped with initial weights on a convolution?
+  - get some domain knowledge
+  - get the model some idea that low notes and high notes are treated differently
+  - Could 3D convolution be useful?
+  - There's always the brute force approach of adding more nodes, but that's not clever
+  - I'm doing shared weights lstm on on/off and actuation, I could do lstm on them individually and merge the results of those in
+  - Go for a much deeper network and use ReLUs because of the sparse data
+  - final activation as hard sigmoid? can go to 0 and 1 so sum of the partials could go to 0 Problem: if something that is supposed to be 1 goes to 0 the error becomes infinite
+  - why do I even keep the dep folder?
+  - I should move the failed models to the dep folder, get a nice graveyard going
+  - definitely think about ReLus
