@@ -72,7 +72,7 @@ def midiToStateMatrix(midifile):
                         # We don't want to worry about non-4 time
                         # signatures. Bail early!
                         print "Found time signature event {}. Bailing!".format(event)
-                        return statematrix
+                        return None
 
                 try:
                     # set time to next known event

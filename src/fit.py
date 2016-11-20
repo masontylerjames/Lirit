@@ -4,6 +4,34 @@ from os.path import isfile, join, abspath
 import numpy as np
 
 
+def generateInputsAndTargets(statematrix, n_steps):
+    '''
+    INPUT: numpy array, int
+
+    statematrix is an (n, 87, 2) array that contains all the pitch
+    on/off and actuation data from a midi file
+    n_steps is an int that describes the number of time steps put into an input
+    slice
+    '''
+    Y = []
+    steps = range(len(statematrix) - n_steps)
+    Y = [statematrix[n_steps + i] for i in steps]
+    inputs = generateInputs(statematrix, n_steps)
+    return inputs, np.asarray(Y)
+
+
+def generateInputs(statematrix, n_steps):
+    X, beat = [], []
+    steps = range(len(statematrix) - n_steps)
+    for t in range(len(statematrix)):
+        mods = [(t // i) % 2 for i in [1, 2, 4, 8]]
+        beat.append([2 * x - 1 for x in mods])
+    X = [statematrix[i:n_steps + i] for i in steps]
+    beats = [beat[i:n_steps + i] for i in steps]
+    inputs = [np.asarray(X), np.asarray(beats)]
+    return inputs
+
+
 def generateXY(statematrix, n_steps, offset, features=False):
     '''
     INPUT: statematrix

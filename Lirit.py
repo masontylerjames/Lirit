@@ -1,12 +1,12 @@
-from keras.layers import LSTM, Lambda, Activation, TimeDistributed, Convolution2D, Convolution3D, Dense
-from keras.layers import Reshape, Input, merge, Permute
+from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D
+from keras.layers import Reshape, Input, TimeDistributed, merge
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
-from src.fit import getfiles, generateXY, splitX
+from src.fit import getfiles, generateInputsAndTargets
 from src.features import features_shape
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.miditransform import state_shape
+from src.miditransform import state_shape, lowerBound, upperBound
 import numpy as np
 
 
@@ -24,27 +24,27 @@ class Lirit(object):
         self.model.fit(X, Y, **kwargs)
 
     def fitmidis(self, filenames, **kwargs):
-        X, Y = [], []
-        if isinstance(filenames, list):
-            print '{} in pipeline'.format(filenames[0].split('/')[-1])
-            statematrix = midiToStateMatrix(filenames[0])
-            X, Y = generateXY(statematrix, self.n_steps, self.offset)
-            for f in filenames[1:]:
-                print '{} in pipeline'.format(filenames[0].split('/')[-1])
-                statematrix = midiToStateMatrix(f)
-                X_f, Y_f = generateXY(
-                    statematrix, self.n_steps, self.offset)
-                X += X_f
-                Y += Y_f
-        else:
-            statematrix = midiToStateMatrix(filenames)
-            X, Y = generateXY(statematrix, self.n_steps, self.offset)
-            # X = self._reshapeInput(X)
-            # Y = self._reshapeInput(Y)
-        if self.split:
-            X = splitX(X)
+        X, Y = None, None
+        if not isinstance(filenames, list):
+            filenames = [filenames]
 
-        self.model.fit(X, Y, **kwargs)
+        for f in filenames:
+            print '{} in pipeline'.format(f.split('/')[-1])
+            statematrix = midiToStateMatrix(f)
+            if statematrix is not None:
+                X_f, Y_f = generateInputsAndTargets(
+                    statematrix, self.n_steps)
+                if X is None or Y is None:
+                    X, Y = X_f, Y_f
+                else:
+                    X = [np.append(X[i], X_f[i], axis=0)
+                         for i in range(len(X))]
+                    Y = np.append(Y, Y_f, axis=0)
+
+        if X is None or Y is None:
+            print 'No viable training data'
+        else:
+            self.model.fit(X, Y, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
         files = getfiles(dirs)
@@ -133,30 +133,102 @@ def model(n_steps):
 
 def model_new_1(n_steps):
     in_shape = (n_steps, features_shape[0], features_shape[1])
-    base_input = Input(shape=in_shape)
+    base_input = Input(shape=in_shape, name='sm_slice')
 
     # shared weights between on/off and actuation features
     features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
                       for i in range(2)]
-    lstm_1 = LSTM(128, activation='linear')
+    lstm_1 = LSTM(128, name='sw_lstm')
     layer_1 = [lstm_1(layer) for layer in features_input]
-    dense_1 = Dense(features_shape[0])
+    dense_1 = Dense(features_shape[0], name='sw_dense')
     layer_2 = [dense_1(layer) for layer in layer_1]
-    reshape_1 = Reshape((features_shape[0], 1))
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
     layer_3 = [reshape_1(layer) for layer in layer_2]
-    stitch_shared = merge(layer_3, mode='concat', concat_axis=-1)
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
 
     # accept beat input
-    beat_input = Input(shape=(n_steps, 4))
-    beat_lstm = LSTM(174, activation='linear')(beat_input)
-    beat_reshape = Reshape((87, 2))
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
 
-    sum_silos = merge([stitch_shared, beat_reshape], mode='sum')
-    out = Activation('sigmoid')(sum_silos)
-    model = Model(input=base_input, output=out)
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
     model.compile(optimizer='rmsprop', loss='binary_crossentropy')
 
     return model
+
+
+def model_new_2(n_steps):
+    silos = []
+
+    # adding beat info seemed successful
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(128, name='sw_lstm')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+    silos.append(stitch_shared)
+
+    # accept beat input and neural net that
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(
+        features_shape[0] * 2, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (features_shape[0], 2), name='beat_out_prepare')(beat_dense)
+    silos.append(beat_reshape)
+
+    # add convolution to try and bootstrap an understanding of key
+    # through setting initial weights
+    l = features_shape[0] - 11
+    key_reshape_1 = Reshape(
+        (n_steps, features_shape[0], 1))(features_input[0])
+    key_weights = _genKeyWeights(l)
+    key_convolution = TimeDistributed(
+        Convolution1D(2, l, weights=key_weights, name='key_convolution'))(key_reshape_1)
+    key_reshape_2 = TimeDistributed(Reshape((24,)))(key_convolution)
+    key_lstm = LSTM(32, name='key_lstm')(key_reshape_2)
+    key_dense = Dense(features_shape[0] * 2)(key_lstm)
+    key_reshape_3 = Reshape((features_shape[0], 2))(key_dense)
+    silos.append(key_reshape_3)
+
+    # sum silos and then put through sigmoid activation
+    sum_silos = merge(silos, mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def _genKeyWeights(l):
+    major = np.array(
+        [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1]).reshape(12, 1)
+    minor = np.array(
+        [1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, -1]).reshape(12, 1)
+    while len(major) < upperBound:
+        major = np.append(major, major, axis=0)
+        minor = np.append(minor, minor, axis=0)
+    keys = np.append(major, minor, axis=1)[lowerBound:lowerBound + l]
+    keys = keys[:, np.newaxis, np.newaxis]
+    return [keys, np.zeros(2)]
 
 if __name__ == '__main__':
     pass
