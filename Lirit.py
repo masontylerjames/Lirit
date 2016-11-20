@@ -218,6 +218,61 @@ def model_new_2(n_steps):
     return model
 
 
+def model_new_3(n_steps):
+    silos = []
+
+    # adding beat info seemed successful
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, name='sw_lstm')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+    silos.append(stitch_shared)
+
+    # accept beat input and neural net that
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(32, name='beat_lstm')(beat_input)
+    beat_dense = Dense(
+        features_shape[0] * 2, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (features_shape[0], 2), name='beat_out_prepare')(beat_dense)
+    silos.append(beat_reshape)
+
+    # add convolution to try and bootstrap an understanding of key
+    # through setting initial weights
+    l = features_shape[0] - 11
+    key_reshape_1 = Reshape(
+        (n_steps, features_shape[0], 1))(features_input[0])
+    key_weights = _genKeyWeights(l)
+    key_convolution = TimeDistributed(
+        Convolution1D(2, l, weights=key_weights, name='key_convolution'))(key_reshape_1)
+    key_reshape_2 = TimeDistributed(
+        Reshape((76 * 2,)))(key_convolution)
+    key_lstm = LSTM(256, name='key_lstm')(key_reshape_2)
+    key_dense = Dense(features_shape[0] * 2)(key_lstm)
+    key_reshape_3 = Reshape((features_shape[0], 2))(key_dense)
+    silos.append(key_reshape_3)
+
+    # sum silos and then put through sigmoid activation
+    sum_silos = merge(silos, mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
 def _genKeyWeights(l):
     major = np.array(
         [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1]).reshape(12, 1)
@@ -227,6 +282,16 @@ def _genKeyWeights(l):
         major = np.append(major, major, axis=0)
         minor = np.append(minor, minor, axis=0)
     keys = np.append(major, minor, axis=1)[lowerBound:lowerBound + l]
+    keys = keys[:, np.newaxis, np.newaxis]
+    return [keys, np.zeros(2)]
+
+
+def _genKeyWeights2():
+    major = np.array(
+        [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1]).reshape(12, 1)
+    minor = np.array(
+        [1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, -1]).reshape(12, 1)
+    keys = np.append(major, minor, axis=1)
     keys = keys[:, np.newaxis, np.newaxis]
     return [keys, np.zeros(2)]
 
