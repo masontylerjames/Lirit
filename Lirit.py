@@ -178,11 +178,11 @@ def model_new_3(n_steps):
     # through setting initial weights
     key_reshape_1 = Reshape(
         (n_steps, features_shape[0], 1))(features_input[0])
-    key_weights = _genKeyWeights2()
+    key_weights = _genKeyWeights3()
     key_convolution = TimeDistributed(
-        Convolution1D(2, 12, weights=key_weights, name='key_convolution'))(key_reshape_1)
+        Convolution1D(4, 12, weights=key_weights, name='key_convolution'))(key_reshape_1)
     key_reshape_2 = TimeDistributed(
-        Reshape((76 * 2,)))(key_convolution)
+        Reshape((76 * 4,)))(key_convolution)
     key_lstm = LSTM(256, name='key_lstm')(key_reshape_2)
     key_dense = Dense(features_shape[0] * 2)(key_lstm)
     key_reshape_3 = Reshape((features_shape[0], 2))(key_dense)
@@ -296,6 +296,16 @@ def _genKeyWeights2():
     keys = np.append(major, minor, axis=1)
     keys = keys[:, np.newaxis, np.newaxis]
     return [keys, np.zeros(2)]
+
+
+def _genKeyWeights3():
+    major = np.array([1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1])
+    nat_minor = np.array([1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, -1])
+    har_minor = np.array([1, -1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1])
+    mel_minor = np.array([1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1, -1])
+    keys = [major, nat_minor, har_minor, mel_minor]
+    keys = [key.reshape(12, 1, 1 1) for key in keys]
+    return [np.concatenate(keys, axis=3), -1 * np.ones(4)]
 
 if __name__ == '__main__':
     pass
