@@ -91,7 +91,9 @@ def midiToStateMatrix(midifile):
 
         time += 1
 
-    return np.asarray(statematrix)
+    sm = np.asarray(statematrix)
+    end = sm.max(axis=-1).max(axis=-1).nonzero()[0][-1]
+    return sm[:end]
 
 
 def noteStateMatrixToMidi(statematrix, filename="example"):
