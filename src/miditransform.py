@@ -71,7 +71,8 @@ def midiToStateMatrix(midifile):
                     if event.numerator not in (2, 4):
                         # We don't want to worry about non-4 time
                         # signatures. Bail early!
-                        print "Found time signature event {}. Bailing!".format(event)
+                        # print "Found time signature event {}.
+                        # Bailing!".format(event)
                         return None
 
                 try:

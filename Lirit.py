@@ -1,4 +1,4 @@
-from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D
+from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D, AveragePooling3D
 from keras.layers import Reshape, Input, TimeDistributed, merge
 from keras.models import Model, load_model
 from os.path import abspath
@@ -29,7 +29,6 @@ class Lirit(object):
             filenames = [filenames]
 
         for f in filenames:
-            print '{} in pipeline'.format(f.split('/')[-1])
             statematrix = midiToStateMatrix(f)
             if statematrix is not None:
                 X_f, Y_f = generateInputsAndTargets(
@@ -42,7 +41,7 @@ class Lirit(object):
                     Y = np.append(Y, Y_f, axis=0)
 
         if X is None or Y is None:
-            print 'No viable training data'
+            pass
         else:
             self.model.fit(X, Y, **kwargs)
 
@@ -112,7 +111,7 @@ class Lirit(object):
 
 
 def model(n_steps):
-    # survival of the fittest BABY
+    # basic shared weights model
     in_shape = (n_steps, features_shape[0], features_shape[1])
     base_input = Input(shape=in_shape)
     features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
@@ -132,6 +131,7 @@ def model(n_steps):
 
 
 def model_new_1(n_steps):
+    # beat model
     in_shape = (n_steps, features_shape[0], features_shape[1])
     base_input = Input(shape=in_shape, name='sm_slice')
 
@@ -165,6 +165,7 @@ def model_new_1(n_steps):
 
 
 def model_new_2(n_steps):
+    # long onoff convolution
     silos = []
 
     # adding beat info seemed successful
@@ -219,6 +220,7 @@ def model_new_2(n_steps):
 
 
 def model_new_3(n_steps):
+    # short onoff convolution
     silos = []
 
     # adding beat info seemed successful
@@ -228,7 +230,7 @@ def model_new_3(n_steps):
     # shared weights between on/off and actuation features
     features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
                       for i in range(2)]
-    lstm_1 = LSTM(256, name='sw_lstm')
+    lstm_1 = LSTM(128, name='sw_lstm')
     layer_1 = [lstm_1(layer) for layer in features_input]
     dense_1 = Dense(features_shape[0], name='sw_dense')
     layer_2 = [dense_1(layer) for layer in layer_1]
@@ -249,12 +251,11 @@ def model_new_3(n_steps):
 
     # add convolution to try and bootstrap an understanding of key
     # through setting initial weights
-    l = features_shape[0] - 11
     key_reshape_1 = Reshape(
         (n_steps, features_shape[0], 1))(features_input[0])
-    key_weights = _genKeyWeights(l)
+    key_weights = _genKeyWeights2()
     key_convolution = TimeDistributed(
-        Convolution1D(2, l, weights=key_weights, name='key_convolution'))(key_reshape_1)
+        Convolution1D(2, 12, weights=key_weights, name='key_convolution'))(key_reshape_1)
     key_reshape_2 = TimeDistributed(
         Reshape((76 * 2,)))(key_convolution)
     key_lstm = LSTM(256, name='key_lstm')(key_reshape_2)
@@ -266,6 +267,218 @@ def model_new_3(n_steps):
     sum_silos = merge(silos, mode='sum', name='sum_silos')
     out = Activation('sigmoid', name='constrain_out')(sum_silos)
 
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_4(n_steps):
+    # deeper model
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
+    lstm_2 = LSTM(256, name='sw_lstm2')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    lstm_layer = [lstm_2(layer) for layer in layer_1]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in lstm_layer]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(64, return_sequences=True,
+                     name='beat_lstm')(beat_input)
+    beat_lstm_2 = LSTM(64, name='beat_lstm_2')(beat_lstm)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm_2)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_5(n_steps):
+    # deeper denser model
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
+    lstm_2 = LSTM(256, name='sw_lstm2')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    lstm_layer = [lstm_2(layer) for layer in layer_1]
+    dense_1 = Dense(256)
+    layer_d = [dense_1(layer) for layer in lstm_layer]
+    dense_2 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_2(layer) for layer in layer_d]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_6(n_steps):
+    # 3D average pooling
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(128, name='sw_lstm')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    # average pooling for each pitch
+    pool_reshape_channel = Reshape(in_shape + (1,))(base_input)
+    pooling = AveragePooling3D((16, 1, 2))(pool_reshape_channel)
+    pool_reshape_lstm = Reshape((128 / 16, 87))(pooling)
+    pool_lstm = LSTM(256)(pool_reshape_lstm)
+    pool_dense = Dense(features_shape[0] * 2)(pool_lstm)
+    pool_reshape_out = Reshape((features_shape[0], 2))(pool_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape, pool_reshape_out],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_7(n_steps):
+    # Deep ReLU lstm, failure
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, activation='relu',
+                  return_sequences=True, name='sw_lstm')
+    lstm_2 = LSTM(256, activation='relu', return_sequences=True)
+    lstm_3 = LSTM(256, activation='relu', return_sequences=True)
+    lstm_4 = LSTM(256, activation='relu')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    layer_1_2 = [lstm_2(layer) for layer in layer_1]
+    layer_1_3 = [lstm_3(layer) for layer in layer_1_2]
+    layer_1_4 = [lstm_4(layer) for layer in layer_1_3]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1_4]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(stitch_shared)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_8(n_steps):
+    # 3D average pooling and convolution
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(128, name='sw_lstm')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    # average pooling for each pitch
+    pool_reshape_channel = Reshape(in_shape + (1,))(base_input)
+    pooling = AveragePooling3D((16, 1, 2))(pool_reshape_channel)
+    pool_reshape_lstm = Reshape((128 / 16, 87))(pooling)
+
+    # add convolution to try and bootstrap an understanding of key
+    # through setting initial weights
+    key_reshape_1 = Reshape(
+        (8, features_shape[0], 1))(pool_reshape_lstm)
+    key_weights = _genKeyWeights2()
+    key_convolution = TimeDistributed(
+        Convolution1D(2, 12, weights=key_weights, name='key_convolution'))(key_reshape_1)
+    key_reshape_2 = TimeDistributed(
+        Reshape((76 * 2,)))(key_convolution)
+
+    pool_lstm = LSTM(256)(key_reshape_2)
+    pool_dense = Dense(features_shape[0] * 2)(pool_lstm)
+    pool_reshape_out = Reshape((features_shape[0], 2))(pool_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape, pool_reshape_out],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
     inputs = [base_input, beat_input]
     model = Model(input=inputs, output=out)
     model.compile(optimizer='rmsprop', loss='binary_crossentropy')
