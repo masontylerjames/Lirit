@@ -1,5 +1,6 @@
 import itertools
 from src.miditransform import upperBound, lowerBound
+import numpy as np
 
 features_shape = (upperBound - lowerBound, 2)
 
@@ -43,10 +44,11 @@ def noteInputForm(note, state, context, beat):
 def noteStateSingleToInputForm(state, time):
     beat = buildBeat(time)
     context = buildContext(state)
-    return [noteInputForm(note, state, context, beat) for note in range(len(state))]
+    return [state]
 
 
 def noteStateMatrixToInputForm(statematrix):
     # return [noteStateSingleToInputForm(state, time) for time, state in enumerate(statematrix)]
     # temp disable
-    return statematrix
+    beats = [buildBeat(time) for time in range(len(statematrix))]
+    return [statematrix[np.newaxis], np.asarray(beats)[np.newaxis]]

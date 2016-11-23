@@ -10,6 +10,116 @@ import numpy as np
 
 
 def model_old(n_steps):
+    # beat model
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(128, name='sw_lstm')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in layer_1]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_4(n_steps):
+    # deeper model
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
+    lstm_2 = LSTM(256, name='sw_lstm2')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    lstm_layer = [lstm_2(layer) for layer in layer_1]
+    dense_1 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_1(layer) for layer in lstm_layer]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(64, return_sequences=True,
+                     name='beat_lstm')(beat_input)
+    beat_lstm_2 = LSTM(64, name='beat_lstm_2')(beat_lstm)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm_2)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_new_5(n_steps):
+    # deeper denser model
+    in_shape = (n_steps, features_shape[0], features_shape[1])
+    base_input = Input(shape=in_shape, name='sm_slice')
+
+    # shared weights between on/off and actuation features
+    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
+                      for i in range(2)]
+    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
+    lstm_2 = LSTM(256, name='sw_lstm2')
+    layer_1 = [lstm_1(layer) for layer in features_input]
+    lstm_layer = [lstm_2(layer) for layer in layer_1]
+    dense_1 = Dense(256)
+    layer_d = [dense_1(layer) for layer in lstm_layer]
+    dense_2 = Dense(features_shape[0], name='sw_dense')
+    layer_2 = [dense_2(layer) for layer in layer_d]
+    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
+    layer_3 = [reshape_1(layer) for layer in layer_2]
+    stitch_shared = merge(layer_3, mode='concat',
+                          concat_axis=-1, name='sw_out_prepare')
+
+    # accept beat input
+    beat_input = Input(shape=(n_steps, 4), name='beat')
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
+    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_reshape = Reshape(
+        (87, 2), name='beat_out_prepare')(beat_dense)
+
+    sum_silos = merge([stitch_shared, beat_reshape],
+                      mode='sum', name='sum_silos')
+    out = Activation('sigmoid', name='constrain_out')(sum_silos)
+    inputs = [base_input, beat_input]
+    model = Model(input=inputs, output=out)
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+
+    return model
+
+
+def model_old(n_steps):
     '''
     OUTPUT: a compiled model
     '''

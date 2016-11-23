@@ -93,7 +93,7 @@ def midiToStateMatrix(midifile):
 
     sm = np.asarray(statematrix)
     end = sm.max(axis=-1).max(axis=-1).nonzero()[0][-1]
-    return sm[:end]
+    return sm[:end + 1]
 
 
 def noteStateMatrixToMidi(statematrix, filename="example"):

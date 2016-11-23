@@ -4,6 +4,14 @@ from os.path import isfile, join, abspath
 import numpy as np
 
 
+def stateMatrixToWords(statematrix):
+    return np.asarray([stateToWords(state) for state in statematrix])
+
+
+def stateToWords(state):
+    return [pitch.sum() + i * 3 for i, pitch in enumerate(state)]
+
+
 def generateInputsAndTargets(statematrix, n_steps):
     '''
     INPUT: numpy array, int

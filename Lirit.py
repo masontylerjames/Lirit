@@ -1,12 +1,11 @@
-from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D, AveragePooling3D
-from keras.layers import Reshape, Input, TimeDistributed, merge
+from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D, Embedding
+from keras.layers import Reshape, Input, TimeDistributed, merge, Dropout, Flatten
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.fit import getfiles, generateInputsAndTargets
-from src.features import features_shape
+from src.features import features_shape, noteStateMatrixToInputForm
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
-from src.miditransform import state_shape, lowerBound, upperBound
 import numpy as np
 
 
@@ -59,35 +58,40 @@ class Lirit(object):
         None a seed is randomly generated
         '''
         statematrix = None
-        sm_offset = 0
+        sm_offset = self.n_steps
         if seed is None:
             sm_offset = self.n_steps
             seed = generateSeed(self.input_shape)
-        if len(seed.shape) == 4:
-            seed = self._reshapeInput(seed)
 
-        probas = self.model.predict(seed)  # generate probabilites
-        # turn probas into predictions with dimensions 87x2
-        predict = outputToState(self._reshapeOutput(
-            probas), self._reshapeOutput(seed[0]))
-        # append flattened  predictions to statematrix
-        statematrix = np.append(
-            seed[0], self._reshapeInput(predict), axis=0)
+        conservatism = 1.
+        for state in seed:
+            N_notes = state[:, 0].sum()
+            conservatism = calcConservatism(N_notes, conservatism)
+
+        inputs = noteStateMatrixToInputForm(seed)
+        probas = self.model.predict(inputs)  # generate probabilites
+        # turn probas into predictions
+        predict = outputToState(probas, conservatism=conservatism)
+        # append predictions to statematrix
+        statematrix = np.append(seed, predict, axis=0)
 
         while len(statematrix) < length + sm_offset:
-            if verbose:
-                print 'Created {} of {} steps'.format(len(statematrix), length - self.n_steps + sm_offset)
-            # generate probabilites
-            probas = self.model.predict(
-                statematrix[-self.n_steps:][np.newaxis])
-            # turn probas into predictions with dimensions 87x2
-            predict = outputToState(self._reshapeOutput(
-                probas), self._reshapeOutput(statematrix))
-            # append flattened  predictions to statematrix
-            statematrix = np.append(
-                statematrix, self._reshapeInput(predict), axis=0)
+            N_notes = predict[:, 0].sum()
+            conservatism = calcConservatism(N_notes, conservatism)
 
-        statematrix = self._reshapeOutput(statematrix)
+            if verbose:
+                print 'Created {} of {} steps'.format(len(statematrix) - self.n_steps, length - self.n_steps + sm_offset)
+            inputs = noteStateMatrixToInputForm(
+                statematrix)
+            inputs = [inputs[0][:, -self.n_steps:],
+                      inputs[1][:, -self.n_steps:]]
+            # generate probabilites
+            probas = self.model.predict(inputs)
+            # turn probas into predictions
+            predict = outputToState(probas, conservatism)
+            # append predictions to statematrix
+            statematrix = np.append(statematrix, predict, axis=0)
+
         noteStateMatrixToMidi(statematrix[sm_offset:], filename)
 
     def save(self, filename):
@@ -96,55 +100,15 @@ class Lirit(object):
     def load(self, filename):
         self.model = load_model(filename)
 
-    def _reshapeInput(self, inputdata):
-        inputdata = np.asarray(inputdata)
-        inputshape = inputdata.shape
-        newshape = np.append(
-            inputshape[:-2], np.prod(inputshape[-2:]))
-        return np.reshape(inputdata, newshape)
 
-    def _reshapeOutput(self, outputdata):
-        outputdata = np.asarray(outputdata)
-        outputshape = outputdata.shape
-        newshape = np.append(outputshape[:-1], state_shape)
-        return np.reshape(outputdata, newshape)
+def calcConservatism(n, conservatism):
+    if n < 2:
+        conservatism -= .02
+    conservatism += (1. - conservatism) * .3
+    return conservatism
 
 
-def model(n_steps):
-    # beat model
-    in_shape = (n_steps, features_shape[0], features_shape[1])
-    base_input = Input(shape=in_shape, name='sm_slice')
-
-    # shared weights between on/off and actuation features
-    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
-                      for i in range(2)]
-    lstm_1 = LSTM(128, name='sw_lstm')
-    layer_1 = [lstm_1(layer) for layer in features_input]
-    dense_1 = Dense(features_shape[0], name='sw_dense')
-    layer_2 = [dense_1(layer) for layer in layer_1]
-    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
-    layer_3 = [reshape_1(layer) for layer in layer_2]
-    stitch_shared = merge(layer_3, mode='concat',
-                          concat_axis=-1, name='sw_out_prepare')
-
-    # accept beat input
-    beat_input = Input(shape=(n_steps, 4), name='beat')
-    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
-    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
-    beat_reshape = Reshape(
-        (87, 2), name='beat_out_prepare')(beat_dense)
-
-    sum_silos = merge([stitch_shared, beat_reshape],
-                      mode='sum', name='sum_silos')
-    out = Activation('sigmoid', name='constrain_out')(sum_silos)
-    inputs = [base_input, beat_input]
-    model = Model(input=inputs, output=out)
-    model.compile(optimizer='rmsprop', loss='binary_crossentropy')
-
-    return model
-
-
-def model_new_3(n_steps):
+def model_shortdropout(n_steps):
     # short onoff convolution
     silos = []
 
@@ -155,21 +119,24 @@ def model_new_3(n_steps):
     # shared weights between on/off and actuation features
     features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
                       for i in range(2)]
-    lstm_1 = LSTM(128, name='sw_lstm')
+    lstm_1 = LSTM(256, name='sw_lstm_1')
     layer_1 = [lstm_1(layer) for layer in features_input]
-    dense_1 = Dense(features_shape[0], name='sw_dense')
-    layer_2 = [dense_1(layer) for layer in layer_1]
-    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
-    layer_3 = [reshape_1(layer) for layer in layer_2]
-    stitch_shared = merge(layer_3, mode='concat',
+    dropout = Dropout(.25)
+    layer_drop_1 = [dropout(layer) for layer in layer_1]
+    dense_2 = Dense(features_shape[0], name='sw_dense_2')
+    layer_4 = [dense_2(layer) for layer in layer_drop_1]
+    reshape_1 = Reshape(
+        (features_shape[0], 1), name='sw_concat_prepare')
+    layer_5 = [reshape_1(layer) for layer in layer_4]
+    stitch_shared = merge(layer_5, mode='concat',
                           concat_axis=-1, name='sw_out_prepare')
     silos.append(stitch_shared)
 
     # accept beat input and neural net that
     beat_input = Input(shape=(n_steps, 4), name='beat')
-    beat_lstm = LSTM(32, name='beat_lstm')(beat_input)
+    beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
     beat_dense = Dense(
-        features_shape[0] * 2, name='beat_dense')(beat_lstm)
+        features_shape[0] * 2, name='beat_dense_2')(beat_lstm)
     beat_reshape = Reshape(
         (features_shape[0], 2), name='beat_out_prepare')(beat_dense)
     silos.append(beat_reshape)
@@ -177,15 +144,19 @@ def model_new_3(n_steps):
     # add convolution to try and bootstrap an understanding of key
     # through setting initial weights
     key_reshape_1 = Reshape(
-        (n_steps, features_shape[0], 1))(features_input[0])
+        (n_steps, features_shape[0], 1), name='key_add_dim')(features_input[0])
     key_weights = _genKeyWeights3()
     key_convolution = TimeDistributed(
-        Convolution1D(4, 12, weights=key_weights, name='key_convolution'))(key_reshape_1)
+        Convolution1D(4, 12, weights=key_weights, name='key_convolution'), name='key_convolutions')(key_reshape_1)
     key_reshape_2 = TimeDistributed(
-        Reshape((76 * 4,)))(key_convolution)
-    key_lstm = LSTM(256, name='key_lstm')(key_reshape_2)
-    key_dense = Dense(features_shape[0] * 2)(key_lstm)
-    key_reshape_3 = Reshape((features_shape[0], 2))(key_dense)
+        Reshape((76 * 4,)), name='key_flatten')(key_convolution)
+    key_dropout_1 = Dropout(.25)(key_reshape_2)
+    key_lstm = LSTM(512, name='key_lstm')(key_dropout_1)
+    key_dropout_2 = Dropout(.25)(key_lstm)
+    key_dense_2 = Dense(
+        features_shape[0] * 2, name='key_dense_2')(key_dropout_2)
+    key_reshape_3 = Reshape(
+        (features_shape[0], 2), name='key_prepare')(key_dense_2)
     silos.append(key_reshape_3)
 
     # sum silos and then put through sigmoid activation
@@ -199,103 +170,90 @@ def model_new_3(n_steps):
     return model
 
 
-def model_new_4(n_steps):
-    # deeper model
-    in_shape = (n_steps, features_shape[0], features_shape[1])
-    base_input = Input(shape=in_shape, name='sm_slice')
+def model_words(n_steps):
+    embed_dim = 16
+    base_input = Input(shape=(n_steps, 87))
+    embedding_td = TimeDistributed(
+        Embedding(261, embed_dim, input_length=87))(base_input)
+    reshape_1 = Reshape((n_steps, 87, embed_dim, 1))(embedding_td)
+    n = 1
+    conv_td_td = TimeDistributed(
+        TimeDistributed(Convolution1D(n, embed_dim)))(reshape_1)
+    flatten_1 = TimeDistributed(Flatten())(conv_td_td)
+    lstm = LSTM(128 * n)(flatten_1)
+    dense = Dense(174)(lstm)
+    reshape_2 = Reshape((87, 2))(dense)
 
-    # shared weights between on/off and actuation features
-    features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
-                      for i in range(2)]
-    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
-    lstm_2 = LSTM(256, name='sw_lstm2')
-    layer_1 = [lstm_1(layer) for layer in features_input]
-    lstm_layer = [lstm_2(layer) for layer in layer_1]
-    dense_1 = Dense(features_shape[0], name='sw_dense')
-    layer_2 = [dense_1(layer) for layer in lstm_layer]
-    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
-    layer_3 = [reshape_1(layer) for layer in layer_2]
-    stitch_shared = merge(layer_3, mode='concat',
-                          concat_axis=-1, name='sw_out_prepare')
-
-    # accept beat input
-    beat_input = Input(shape=(n_steps, 4), name='beat')
-    beat_lstm = LSTM(64, return_sequences=True,
-                     name='beat_lstm')(beat_input)
-    beat_lstm_2 = LSTM(64, name='beat_lstm_2')(beat_lstm)
-    beat_dense = Dense(174, name='beat_dense')(beat_lstm_2)
-    beat_reshape = Reshape(
-        (87, 2), name='beat_out_prepare')(beat_dense)
-
-    sum_silos = merge([stitch_shared, beat_reshape],
-                      mode='sum', name='sum_silos')
-    out = Activation('sigmoid', name='constrain_out')(sum_silos)
-    inputs = [base_input, beat_input]
-    model = Model(input=inputs, output=out)
+    model = Model(input=base_input, output=reshape_2)
     model.compile(optimizer='rmsprop', loss='binary_crossentropy')
-
     return model
 
 
-def model_new_5(n_steps):
-    # deeper denser model
+def model(n_steps):
+    # short onoff convolution
+    silos = []
+
+    # adding beat info seemed successful
     in_shape = (n_steps, features_shape[0], features_shape[1])
     base_input = Input(shape=in_shape, name='sm_slice')
 
     # shared weights between on/off and actuation features
     features_input = [Lambda(lambda x: x[:, :, :, i], output_shape=(n_steps, features_shape[0]))(base_input)
                       for i in range(2)]
-    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm')
-    lstm_2 = LSTM(256, name='sw_lstm2')
+    lstm_1 = LSTM(256, return_sequences=True, name='sw_lstm_1')
     layer_1 = [lstm_1(layer) for layer in features_input]
-    lstm_layer = [lstm_2(layer) for layer in layer_1]
-    dense_1 = Dense(256)
-    layer_d = [dense_1(layer) for layer in lstm_layer]
-    dense_2 = Dense(features_shape[0], name='sw_dense')
-    layer_2 = [dense_2(layer) for layer in layer_d]
-    reshape_1 = Reshape((features_shape[0], 1), name='concat_prepare')
-    layer_3 = [reshape_1(layer) for layer in layer_2]
-    stitch_shared = merge(layer_3, mode='concat',
+    lstm_2 = LSTM(256, name='sw_lstm_2')  # deeper
+    layer_2 = [lstm_2(layer) for layer in layer_1]
+    dense_1 = Dense(256, name='sw_dense_1')  # deeper
+    layer_3 = [dense_1(layer) for layer in layer_2]
+    dense_2 = Dense(features_shape[0], name='sw_dense_2')
+    layer_4 = [dense_2(layer) for layer in layer_3]
+    reshape_1 = Reshape(
+        (features_shape[0], 1), name='sw_concat_prepare')
+    layer_5 = [reshape_1(layer) for layer in layer_4]
+    stitch_shared = merge(layer_5, mode='concat',
                           concat_axis=-1, name='sw_out_prepare')
+    silos.append(stitch_shared)
 
-    # accept beat input
+    # accept beat input and neural net that
     beat_input = Input(shape=(n_steps, 4), name='beat')
     beat_lstm = LSTM(16, name='beat_lstm')(beat_input)
-    beat_dense = Dense(174, name='beat_dense')(beat_lstm)
+    beat_dense_1 = Dense(256, name='beat_dense_1')(beat_lstm)
+    beat_dense = Dense(
+        features_shape[0] * 2, name='beat_dense_2')(beat_dense_1)
     beat_reshape = Reshape(
-        (87, 2), name='beat_out_prepare')(beat_dense)
+        (features_shape[0], 2), name='beat_out_prepare')(beat_dense)
+    silos.append(beat_reshape)
 
-    sum_silos = merge([stitch_shared, beat_reshape],
-                      mode='sum', name='sum_silos')
+    # add convolution to try and bootstrap an understanding of key
+    # through setting initial weights
+    key_reshape_1 = Reshape(
+        (n_steps, features_shape[0], 1), name='key_add_dim')(features_input[0])
+    key_weights = _genKeyWeights3()
+    key_convolution = TimeDistributed(
+        Convolution1D(4, 12, weights=key_weights, name='key_convolution'), name='key_convolutions')(key_reshape_1)
+    key_reshape_2 = TimeDistributed(
+        Reshape((76 * 4,)), name='key_flatten')(key_convolution)
+    key_lstm = LSTM(128, name='key_lstm')(key_reshape_2)
+    key_keys = Dense(48, name='key_regularization')(key_lstm)
+    key_activation = Activation(
+        'softmax', name='key_softmax')(key_keys)
+    key_dense_1 = Dense(256, name='key_dense_1')(key_activation)
+    key_dense_2 = Dense(
+        features_shape[0] * 2, name='key_dense_2')(key_dense_1)
+    key_reshape_3 = Reshape(
+        (features_shape[0], 2), name='key_prepare')(key_dense_2)
+    silos.append(key_reshape_3)
+
+    # sum silos and then put through sigmoid activation
+    sum_silos = merge(silos, mode='sum', name='sum_silos')
     out = Activation('sigmoid', name='constrain_out')(sum_silos)
+
     inputs = [base_input, beat_input]
     model = Model(input=inputs, output=out)
     model.compile(optimizer='rmsprop', loss='binary_crossentropy')
 
     return model
-
-
-def _genKeyWeights(l):
-    major = np.array(
-        [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1]).reshape(12, 1)
-    minor = np.array(
-        [1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, -1]).reshape(12, 1)
-    while len(major) < upperBound:
-        major = np.append(major, major, axis=0)
-        minor = np.append(minor, minor, axis=0)
-    keys = np.append(major, minor, axis=1)[lowerBound:lowerBound + l]
-    keys = keys[:, np.newaxis, np.newaxis]
-    return [keys, np.zeros(2)]
-
-
-def _genKeyWeights2():
-    major = np.array(
-        [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1]).reshape(12, 1)
-    minor = np.array(
-        [1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, -1]).reshape(12, 1)
-    keys = np.append(major, minor, axis=1)
-    keys = keys[:, np.newaxis, np.newaxis]
-    return [keys, np.zeros(2)]
 
 
 def _genKeyWeights3():
@@ -304,7 +262,7 @@ def _genKeyWeights3():
     har_minor = np.array([1, -1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1])
     mel_minor = np.array([1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1, -1])
     keys = [major, nat_minor, har_minor, mel_minor]
-    keys = [key.reshape(12, 1, 1 1) for key in keys]
+    keys = [key.reshape(12, 1, 1, 1) for key in keys]
     return [np.concatenate(keys, axis=3), -1 * np.ones(4)]
 
 if __name__ == '__main__':
