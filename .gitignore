@@ -4,3 +4,4 @@ data/train*
 .remote-sync.json
 move/*
 data/*
+dep/*
