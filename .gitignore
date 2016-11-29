@@ -2,3 +2,5 @@ ignore/*
 data/train*
 *.pyc
 .remote-sync.json
+move/*
+data/*
