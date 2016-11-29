@@ -1,5 +1,4 @@
-from keras.layers import LSTM, Lambda, Activation, Dense, Convolution1D, Embedding
-from keras.layers import Reshape, Input, TimeDistributed, merge, Dropout, Flatten
+from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
