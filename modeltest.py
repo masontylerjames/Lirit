@@ -105,10 +105,14 @@ def model_convolution(n_steps):
     shared_setup = Permute(
         (3, 1, 2), name='sw_permute_1')(base_input)
     shared_lstm_1 = TimeDistributed(
-        LSTM(128), name='sw_lstm_1')(shared_setup)
+        LSTM(256, return_sequences=True), name='sw_lstm_1')(shared_setup)
+    shared_lstm_2 = TimeDistributed(
+        LSTM(256), name='sw_lstm_2')(shared_lstm_1)
     shared_dense_1 = TimeDistributed(
-        Dense(87), name='sw_dense_1')(shared_lstm_1)
-    raw_out = Permute((2, 1))(shared_dense_1)
+        Dense(128), name='sw_dense_1')(shared_lstm_2)
+    shared_dense_2 = TimeDistributed(
+        Dense(87), name='sw_dense_2')(shared_dense_1)
+    raw_out = Permute((2, 1))(shared_dense_2)
     silos.append(raw_out)
 
     # convolution
@@ -116,8 +120,9 @@ def model_convolution(n_steps):
     cv_reshape_1 = TimeDistributed(Reshape((87, 2, 1)))(base_input)
     cv_cv = TimeDistributed(Convolution2D(n, 25, 2))(cv_reshape_1)
     cv_flatten = TimeDistributed(Flatten())(cv_cv)
-    cv_lstm = LSTM(64 * n)(cv_flatten)
-    cv_dense = Dense(174)(cv_lstm)
+    cv_lstm_1 = LSTM(64 * n)(cv_flatten)
+    cv_lstm_2 = LSTM(32 * n)(cv_lstm_1)
+    cv_dense = Dense(174)(cv_lstm_2)
     cv_reshape_2 = Reshape((87, 2))(cv_dense)
     silos.append(cv_reshape_2)
 

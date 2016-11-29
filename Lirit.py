@@ -7,6 +7,7 @@ from src.fit import getfiles, generateInputsAndTargets
 from src.features import features_shape, noteStateMatrixToInputForm
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import numpy as np
+from featuresmodel import addfeatures
 
 
 class Lirit(object):
@@ -68,8 +69,9 @@ class Lirit(object):
             N_notes = state[:, 0].sum()
             conservatism = calcConservatism(N_notes, conservatism)
 
-        inputs = noteStateMatrixToInputForm(seed)
-        probas = self.model.predict(inputs)  # generate probabilites
+        inputs = addfeatures(seed)
+        probas = self.model.predict(
+            inputs[np.newaxis])  # generate probabilites
         # turn probas into predictions
         predict = outputToState(probas, conservatism=conservatism)
         # append predictions to statematrix
@@ -81,10 +83,8 @@ class Lirit(object):
 
             if verbose:
                 print 'Created {} of {} steps'.format(len(statematrix) - self.n_steps, length - self.n_steps + sm_offset)
-            inputs = noteStateMatrixToInputForm(
-                statematrix)
-            inputs = [inputs[0][:, -self.n_steps:],
-                      inputs[1][:, -self.n_steps:]]
+            inputs = addfeatures(
+                statematrix[-self.n_steps:])[np.newaxis]
             # generate probabilites
             probas = self.model.predict(inputs)
             # turn probas into predictions
