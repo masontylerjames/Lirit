@@ -12,10 +12,8 @@ class Lirit(object):
 
     def __init__(self, n_steps=128):
         self.n_steps = n_steps
-        self.offset = 1
         self.model = model(self.n_steps)
-        self.input_shape = (n_steps, shape[
-                            0], shape[1])
+        self.input_shape = (n_steps,) + shape
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
