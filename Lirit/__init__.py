@@ -1,10 +1,10 @@
 from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
-from src.compose import outputToState, generateSeed
-from src.features import addfeatures, n_features
-from src.fit import getfiles, generateXY
-from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
+from compose import outputToState, generateSeed
+from features import addfeatures, n_features
+from fit import getfiles, generateXY
+from miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 import numpy as np
 import tensorflow as tf
 

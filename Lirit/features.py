@@ -1,4 +1,4 @@
-from src.miditransform import lowerBound
+from miditransform import lowerBound
 import numpy as np
 
 n_features = 173
