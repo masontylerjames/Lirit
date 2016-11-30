@@ -2,7 +2,7 @@ from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
-from src.featuresmodel import addfeatures
+from src.features import addfeatures
 from src.fit import getfiles, generateInputsAndTargets
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 import numpy as np
