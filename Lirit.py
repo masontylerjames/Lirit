@@ -2,7 +2,7 @@ from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
-from src.features import addfeatures
+from src.features import addfeatures, n_features
 from src.fit import getfiles, generateXY
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 import numpy as np
@@ -106,7 +106,7 @@ def calcConservatism(n, conservatism):
 
 
 def model(n_steps):
-    n = 173
+    n = n_features
     dropout = 0.5
     input_layer = Input(shape=(n_steps, 87, n))
     permute_1 = Permute((2, 1, 3))(input_layer)
