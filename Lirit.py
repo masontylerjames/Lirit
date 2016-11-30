@@ -2,10 +2,9 @@ from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
-from src.features import features_shape, noteStateMatrixToInputForm
 from src.featuresmodel import addfeatures
 from src.fit import getfiles, generateInputsAndTargets
-from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
+from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 import numpy as np
 import tensorflow as tf
 
@@ -16,8 +15,8 @@ class Lirit(object):
         self.n_steps = n_steps
         self.offset = 1
         self.model = model(self.n_steps)
-        self.input_shape = (n_steps, features_shape[
-                            0], features_shape[1])
+        self.input_shape = (n_steps, shape[
+                            0], shape[1])
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
