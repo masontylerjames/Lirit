@@ -1,6 +1,8 @@
 from src.miditransform import lowerBound
 import numpy as np
 
+n_features = 173
+
 
 def addfeatures(statematrix):
     return np.array([manufacturestate(state) for state in statematrix])
