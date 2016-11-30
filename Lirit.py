@@ -7,17 +7,17 @@ from src.features import features_shape, noteStateMatrixToInputForm
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import numpy as np
 from src.featuresmodel import addfeatures
+import tensorflow as tf
 
 
 class Lirit(object):
 
-    def __init__(self, n_steps=128, split=False):
+    def __init__(self, n_steps=128):
         self.n_steps = n_steps
         self.offset = 1
         self.model = model(self.n_steps)
         self.input_shape = (n_steps, features_shape[
                             0], features_shape[1])
-        self.split = split
 
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
@@ -81,7 +81,7 @@ class Lirit(object):
             conservatism = calcConservatism(N_notes, conservatism)
 
             if verbose:
-                print 'Created {} of {} steps'.format(len(statematrix) - self.n_steps, length - self.n_steps + sm_offset)
+                print "Created {} of {} steps".format(len(statematrix) - self.n_steps, length - self.n_steps + sm_offset)
             inputs = addfeatures(
                 statematrix[-self.n_steps:])[np.newaxis]
             # generate probabilites
@@ -107,8 +107,7 @@ def calcConservatism(n, conservatism):
     return conservatism
 
 
-def model():
-    n_steps = 128
+def model(n_steps):
     n = 173
     dropout = 0.5
     input_layer = Input(shape=(n_steps, 87, n))
