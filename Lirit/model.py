@@ -1,7 +1,7 @@
+from features import n_features
 from keras.layers import Input, Permute, TimeDistributed, LSTM, Dropout, Dense, Activation, Bidirectional
 from keras.models import Model
 import tensorflow as tf
-from features import n_features
 
 
 def model(n_steps, dropout=0.5):
