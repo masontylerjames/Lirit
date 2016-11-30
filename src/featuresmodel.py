@@ -1,10 +1,5 @@
-from keras.models import *
-from keras.layers import *
-from keras.callbacks import ModelCheckpoint
-from src.miditransform import midiToStateMatrix, lowerBound, upperBound
-from src.fit import *
+from src.miditransform import lowerBound
 import numpy as np
-import tensorflow as tf
 
 
 def addfeatures(statematrix):
