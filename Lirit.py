@@ -105,9 +105,7 @@ def calcConservatism(n, conservatism):
     return conservatism
 
 
-def model(n_steps):
-    n = n_features
-    dropout = 0.5
+def model(n_steps, dropout=0.5):
     input_layer = Input(shape=(n_steps, 87, n))
     permute_1 = Permute((2, 1, 3))(input_layer)
     with tf.device('/gpu:0'):
