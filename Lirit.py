@@ -2,11 +2,11 @@ from keras.layers import *
 from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
-from src.fit import getfiles, generateInputsAndTargets
 from src.features import features_shape, noteStateMatrixToInputForm
+from src.featuresmodel import addfeatures
+from src.fit import getfiles, generateInputsAndTargets
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix
 import numpy as np
-from src.featuresmodel import addfeatures
 import tensorflow as tf
 
 
