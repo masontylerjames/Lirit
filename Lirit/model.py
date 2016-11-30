@@ -5,6 +5,11 @@ import tensorflow as tf
 
 
 def model(n_steps, dropout=0.5):
+    '''
+    The model architecture has two time-series LSTM layers that have shared weights over pitches
+    This is followed by two bidirectional pitch-series LSTM layers.
+    The final step is two dense layers with shared weights over pitches
+    '''
     input_layer = Input(shape=(n_steps, 87, n_features))
     permute_1 = Permute((2, 1, 3))(input_layer)
     with tf.device('/gpu:0'):
