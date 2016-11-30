@@ -3,7 +3,7 @@ from keras.models import Model, load_model
 from os.path import abspath
 from src.compose import outputToState, generateSeed
 from src.features import addfeatures
-from src.fit import getfiles, generateInputsAndTargets
+from src.fit import getfiles, generateXY
 from src.miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 import numpy as np
 import tensorflow as tf
@@ -29,15 +29,14 @@ class Lirit(object):
         for f in filenames:
             statematrix = midiToStateMatrix(f)
             if statematrix is not None:
-                X_f, Y_f = generateInputsAndTargets(
+                X_f, Y_f = generateXY(
                     statematrix, self.n_steps)
+                X_f = addfeatures(X_f)
                 if X is None or Y is None:
                     X, Y = X_f, Y_f
                 else:
-                    X = [np.append(X[i], X_f[i], axis=0)
-                         for i in range(len(X))]
+                    X = np.append(X, X_f, axis=0)
                     Y = np.append(Y, Y_f, axis=0)
-
         if X is None or Y is None:
             pass
         else:
@@ -51,7 +50,7 @@ class Lirit(object):
         '''
         INPUT: int
 
-        length: length of the resulting music piece in number of 32nd notes
+        length: length of the resulting music piece in number of 16th notes
         filename: the name of the file where the result is saved
         seed: a single input entry for the neural network to start with. If
         None a seed is randomly generated
