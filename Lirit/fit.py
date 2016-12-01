@@ -1,9 +1,25 @@
 from os import listdir
 from os.path import isfile, join, abspath
+from miditransform import midiToStateMatrix
+from features import addfeatures
 import numpy as np
 
 
-def generateXY(statematrix, n_steps,):
+def XGen(files, n_steps):
+    for f in files:
+        statematrix = midiToStateMatrix(f)
+        if statematrix is not None:
+            for i in range(len(statematrix) - n_steps):
+                yield addfeatures(statematrix[i:n_steps + i])
+
+
+def YGen(files, n_steps):
+    for f in files:
+
+    pass
+
+
+def generateXY(statematrix, n_steps):
     '''
     INPUT: statematrix
     OUTPUT: list of statematrix slices, list of statematrix slices
