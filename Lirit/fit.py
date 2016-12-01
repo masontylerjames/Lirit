@@ -5,18 +5,14 @@ from features import addfeatures
 import numpy as np
 
 
-def XGen(files, n_steps):
+def fitGenerator(files, n_steps):
     for f in files:
         statematrix = midiToStateMatrix(f)
         if statematrix is not None:
             for i in range(len(statematrix) - n_steps):
-                yield addfeatures(statematrix[i:n_steps + i])
-
-
-def YGen(files, n_steps):
-    for f in files:
-
-    pass
+                X = addfeatures(statematrix[i:n_steps + i])
+                Y = statematrix[n_steps + i]
+                yield X, Y
 
 
 def generateXY(statematrix, n_steps):
