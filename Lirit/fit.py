@@ -23,23 +23,26 @@ def fitGenerator(files, n_steps, batch_size=32, verbose=True):
                 pickle.dump((featuresmatrix, statematrix), out)
             pickles.append(filename)
 
-    while True:
-        for p in pickles:
-            if verbose:
-                print p
+    if pickles:
+        while True:
+            for p in pickles:
+                if verbose:
+                    print "Using file {}".format(p)
 
-            featuresmatrix, statematrix = pickle.load(p)
-            for i in range(len(statematrix) - n_steps):
-                X_slice = featuresmatrix[i:n_steps + i]
-                Y_slice = statematrix[n_steps + i]
-                if X is None:
-                    X, Y = X_slice, Y_slice
-                else:
-                    X = np.append(X, X_slice, axis=0)
-                    Y = np.append(Y, Y_slice, axis=0)
-                if len(X) == batch_size:
-                    yield X, Y
-                    X, Y = None, None
+                featuresmatrix, statematrix = pickle.load(p)
+                for i in range(len(statematrix) - n_steps):
+                    X_slice = featuresmatrix[i:n_steps + i]
+                    Y_slice = statematrix[n_steps + i]
+                    if X is None:
+                        X, Y = X_slice, Y_slice
+                    else:
+                        X = np.append(X, X_slice, axis=0)
+                        Y = np.append(Y, Y_slice, axis=0)
+                    if len(X) == batch_size:
+                        yield X, Y
+                        X, Y = None, None
+    else:
+        raise Exception('No valid files submitted')
 
 
 def generateXY(statematrix, n_steps):
