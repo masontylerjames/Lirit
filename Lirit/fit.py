@@ -3,16 +3,43 @@ from os.path import isfile, join, abspath
 from miditransform import midiToStateMatrix
 from features import addfeatures
 import numpy as np
+import cPickle as pickle
+import os
 
 
-def fitGenerator(files, n_steps):
+def fitGenerator(files, n_steps, batch_size=32, verbose=True):
+    X, Y = None, None
+    pickles = []
     for f in files:
         statematrix = midiToStateMatrix(f)
         if statematrix is not None:
+            featuresmatrix = addfeatures(statematrix)
+            filename = 'temp/' + \
+                f.split('/')[-1].split('.')[0] + '.pkl'
+            d = os.path.dirname(filename)
+            if not os.path.exists(d):
+                os.makedirs(d)
+            with open(filename, 'w') as out:
+                pickle.dump((featuresmatrix, statematrix), out)
+            pickles.append(filename)
+
+    while True:
+        for p in pickles:
+            if verbose:
+                print p
+
+            featuresmatrix, statematrix = pickle.load(p)
             for i in range(len(statematrix) - n_steps):
-                X = addfeatures(statematrix[i:n_steps + i])
-                Y = statematrix[n_steps + i]
-                yield X, Y
+                X_slice = featuresmatrix[i:n_steps + i]
+                Y_slice = statematrix[n_steps + i]
+                if X is None:
+                    X, Y = X_slice, Y_slice
+                else:
+                    X = np.append(X, X_slice, axis=0)
+                    Y = np.append(Y, Y_slice, axis=0)
+                if len(X) == batch_size:
+                    yield X, Y
+                    X, Y = None, None
 
 
 def generateXY(statematrix, n_steps):
