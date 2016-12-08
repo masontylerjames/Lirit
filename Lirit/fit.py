@@ -2,8 +2,8 @@ from os import listdir
 from os.path import isfile, join, abspath
 from miditransform import midiToStateMatrix
 from features import addfeatures
-import numpy as np
 import cPickle as pickle
+import numpy as np
 import os
 
 
