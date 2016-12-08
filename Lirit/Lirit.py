@@ -2,7 +2,7 @@ from keras.models import load_model
 from os.path import abspath
 from compose import outputToState, generateSeed
 from features import addfeatures
-from fit import getfiles, generateXY
+from fit import getfiles, generateXY, fitGenerator
 from miditransform import noteStateMatrixToMidi, midiToStateMatrix, shape
 from model import model
 import numpy as np
@@ -18,26 +18,14 @@ class Lirit(object):
     def fit(self, X, Y, **kwargs):
         self.model.fit(X, Y, **kwargs)
 
-    def fitmidis(self, filenames, **kwargs):
+    def fitmidis(self, filenames, batch_size=32, **kwargs):
         X, Y = None, None
         if not isinstance(filenames, list):
             filenames = [filenames]
 
-        for f in filenames:
-            statematrix = midiToStateMatrix(f)
-            if statematrix is not None:
-                X_f, Y_f = generateXY(
-                    statematrix, self.n_steps)
-                X_f = addfeatures(X_f)
-                if X is None or Y is None:
-                    X, Y = X_f, Y_f
-                else:
-                    X = np.append(X, X_f, axis=0)
-                    Y = np.append(Y, Y_f, axis=0)
-        if X is None or Y is None:
-            pass
-        else:
-            self.model.fit(X, Y, **kwargs)
+        generator = fitGenerator(
+            filenames, self.n_steps, batch_size=batch_size)
+        self.model.fit_generator(generator, **kwargs)
 
     def fitcollection(self, dirs, **kwargs):
         files = getfiles(dirs)
