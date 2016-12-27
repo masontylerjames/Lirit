@@ -3,3 +3,6 @@ data/train*
 *.pyc
 .remote-sync.json
 composing.py
+compositions/*
+data/*
+temp/*
