@@ -4,7 +4,7 @@ import numpy as np
 # lowerBound = 16  # midi pitch corresponding to just above 20 Hz
 # upperBound = 135  # midi pitch corresponding to just below 20 kHz
 lowerBound = 21
-upperBound = 108
+upperBound = 109
 shape = (upperBound - lowerBound, 2)
 
 

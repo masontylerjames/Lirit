@@ -8,20 +8,28 @@ import os
 
 
 def fitGenerator(files, n_steps, batch_size=32, verbose=True):
+    '''
+    Inputs: list of files to build into statematrices, number of steps to feed into the network
+
+    Takes a list of midi files, turns them into state and feature matrices, and then pickles those matrices to be loaded later as part of the generator
+    '''
     X, Y = None, None
     pickles = []
     for f in files:
-        statematrix = midiToStateMatrix(f)
-        if statematrix is not None:
-            featuresmatrix = addfeatures(statematrix)
-            filename = 'temp/' + \
-                f.split('/')[-1].split('.')[0] + '.pkl'
-            d = os.path.dirname(filename)
-            if not os.path.exists(d):
-                os.makedirs(d)
-            with open(filename, 'w') as out:
-                pickle.dump((featuresmatrix, statematrix), out)
-            pickles.append(filename)
+        filename = 'temp/' + \
+            f.split('/')[-1].split('.')[0] + '.pkl'
+        d = os.path.dirname(filename)
+        if verbose:
+            print 'processing {}'.format(f)
+        if not os.path.exists(filename):
+            statematrix = midiToStateMatrix(f)
+            if statematrix is not None:
+                featuresmatrix = addfeatures(statematrix)
+                if not os.path.exists(d):
+                    os.makedirs(d)
+                with open(filename, 'w') as out:
+                    pickle.dump((featuresmatrix, statematrix), out)
+                pickles.append(filename)
 
     if pickles:
         while True:
