@@ -18,8 +18,10 @@ def midiToStateMatrix(midifile):
 
     # pattern is the container of the entire midi file, and contains
     # the Tempo and Resolution of the music and a list of tracks
-    pattern = midi.read_midifile(midifile)
-
+    try:
+        pattern = midi.read_midifile(midifile)
+    except TypeError:
+        return None
     # this tracks time until next known event in each track
     timeleft = [track[0].tick for track in pattern]
 
